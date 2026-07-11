@@ -1,5 +1,5 @@
 /* Impulso — service worker (offline app shell) */
-const CACHE = 'impulso-v1';
+const CACHE = 'impulso-v2';
 const ASSETS = [
   './',
   './index.html',

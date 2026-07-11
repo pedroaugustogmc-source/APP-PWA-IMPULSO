@@ -13,6 +13,12 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
+<!-- Launch screens (evita flash branco na abertura) -->
+<link rel="apple-touch-startup-image" href="icons/splash-1320x2868.png" media="screen and (device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash-1290x2796.png" media="screen and (device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash-1206x2622.png" media="screen and (device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash-1179x2556.png" media="screen and (device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+
 <!-- iOS standalone -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -285,6 +291,24 @@
   a.reset,.reset{color:var(--faint);text-decoration:underline;cursor:pointer;background:none;border:none;font:inherit}
   .reset:active{color:var(--danger)}
 
+  /* ---------- sistema de movimento (premium) ---------- */
+  .overlay.open{animation:fadeIn .26s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .overlay.open .sheet{animation:sheetIn .38s cubic-bezier(.34,1.28,.5,1)}
+  @keyframes sheetIn{from{opacity:0;transform:translateY(26px) scale(.965)}to{opacity:1;transform:none}}
+  .done-burst .big{animation:pop .55s cubic-bezier(.34,1.5,.55,1)}
+  @keyframes pop{0%{transform:scale(.35);opacity:0}55%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
+  .done-burst h2{animation:riseIn .45s ease .06s both}
+  .done-burst .lead{animation:riseIn .45s ease .14s both}
+  @keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .ring-wrap.running .ring-fg{animation:ringGlow 3.4s ease-in-out infinite}
+  @keyframes ringGlow{0%,100%{filter:drop-shadow(0 0 5px var(--signal-line))}50%{filter:drop-shadow(0 0 15px var(--signal-line))}}
+  .clock{transition:color .3s ease}
+  .today .greet{color:var(--signal-2);font-weight:700}
+  .empty-motif{display:flex;align-items:center;gap:12px;margin:2px 0 12px}
+  .empty-motif svg{width:30px;height:30px;flex-shrink:0;opacity:.9;filter:drop-shadow(0 0 8px var(--signal-line))}
+  .empty-motif span{font-family:"Bricolage Grotesque";font-weight:600;font-size:19px;color:var(--muted);line-height:1.2}
+
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -438,13 +462,19 @@ function streak(arr){
 function fmtToday(){
   return new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
 }
+function greeting(){
+  const h=new Date().getHours();
+  if(h>=5 && h<12) return 'bom dia';
+  if(h>=12 && h<18) return 'boa tarde';
+  return 'boa noite';
+}
 function focusDates(){return state.focus.map(f=>f.d);}
 function focusToday(){return state.focus.filter(f=>f.d===todayISO()).length;}
 function focusWeek(){return weekDatesDone(state.focus.map(f=>f.d));}
 
 /* ---------- render ---------- */
 function render(){
-  document.getElementById('today').textContent=fmtToday();
+  document.getElementById('today').innerHTML='<span class="greet">'+greeting()+'</span> · '+fmtToday();
   renderHero();
   renderTasks();
   renderTrackers();
@@ -505,14 +535,19 @@ function renderHero(){
   if(dc.hoje>0) parts.push(dc.hoje+' vence'+(dc.hoje>1?'m':'')+' hoje');
   dueLine.innerHTML = parts.length ? '🕒 '+parts.join(' · ') : '';
 
+  const eyebrow=document.querySelector('.hero .eyebrow');
   if(!t){
-    a.textContent='Adicione uma tarefa — o sistema escolhe por você';
     a.classList.add('empty');
+    a.innerHTML='<div class="empty-motif">'+
+      '<svg viewBox="0 0 48 48" fill="none" stroke="#F0A63C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 42V10M12 22l12-12 12 12"/></svg>'+
+      '<span>Cabeça limpa.<br>Jogue a primeira coisa aqui embaixo ↓</span></div>';
+    if(eyebrow) eyebrow.textContent='Comece por aqui';
     chip.className='hero-chip'; chip.textContent='';
     stepZone.style.display='none';
     btn.disabled=true;
     return;
   }
+  if(eyebrow) eyebrow.textContent='O próximo passo';
   a.classList.remove('empty');
   a.textContent=t.text;
   btn.disabled=false;
@@ -620,9 +655,10 @@ function accordion(key,label,inner){
 }
 
 function renderTrackers(){
-  document.getElementById('fcToday').innerHTML=focusToday()+'<small> blocos hoje</small>';
+  const ft=focusToday(), fw=focusWeek();
+  document.getElementById('fcToday').innerHTML=ft+'<small> '+(ft===1?'bloco':'blocos')+' hoje</small>';
   document.getElementById('fcDots').innerHTML=weekDots(focusDates());
-  document.getElementById('fcWeek').textContent=focusWeek()+' blocos esta semana · a meta é só não zerar o dia.';
+  document.getElementById('fcWeek').textContent=fw+(fw===1?' bloco':' blocos')+' esta semana · a meta é só não zerar o dia.';
 
   const ex=weekDatesDone(state.exercise);
   document.getElementById('exWeek').innerHTML=ex+'<small>/5 esta semana</small>';
@@ -633,7 +669,7 @@ function renderTrackers(){
   document.getElementById('exDots').innerHTML=weekDots(state.exercise);
 
   const sl=streak(state.sleep);
-  document.getElementById('slStreak').innerHTML=sl+'<small> dias seguidos</small>';
+  document.getElementById('slStreak').innerHTML=sl+'<small> '+(sl===1?'dia seguido':'dias seguidos')+'</small>';
   const slBtn=document.getElementById('slBtn');
   const slToday=state.sleep.includes(todayISO());
   slBtn.textContent=slToday?'✓ Registrado':'Dormi no horário';
@@ -849,6 +885,8 @@ function captureDistraction(){
 function pickLen(l){ if(timer.running) return; state.focusMin=l; timer.left=l*60; commit(); const t=nextTask(); renderTimer(t); }
 function runTimer(){
   timer.running=true;
+  acquireWake();
+  const rw=document.querySelector('.ring-wrap'); if(rw)rw.classList.add('running');
   clearInterval(timer.int);
   const total=state.focusMin*60, C=653.45;
   timer.int=setInterval(()=>{
@@ -862,10 +900,26 @@ function runTimer(){
   const pb=document.getElementById('pauseBtn'); if(pb)pb.textContent='Pausar';
 }
 function togglePause(){
-  if(timer.running){clearInterval(timer.int); timer.running=false; const pb=document.getElementById('pauseBtn'); if(pb)pb.textContent='Retomar';}
+  if(timer.running){
+    clearInterval(timer.int); timer.running=false; releaseWake();
+    const rw=document.querySelector('.ring-wrap'); if(rw)rw.classList.remove('running');
+    const pb=document.getElementById('pauseBtn'); if(pb)pb.textContent='Retomar';
+  }
   else{runTimer();}
 }
-function stopTimer(){clearInterval(timer.int); timer.running=false;}
+function stopTimer(){clearInterval(timer.int); timer.running=false; releaseWake();}
+
+/* ---------- wake lock: tela acesa durante o foco (iOS 16.4+) ---------- */
+let wakeLock=null;
+async function acquireWake(){
+  try{ if('wakeLock' in navigator){ wakeLock=await navigator.wakeLock.request('screen'); } }catch(e){}
+}
+function releaseWake(){
+  try{ if(wakeLock){ wakeLock.release(); wakeLock=null; } }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible' && timer.running){ acquireWake(); }
+});
 function clockStr(s){s=Math.max(0,s); const m=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return m+':'+ss;}
 function finishTimer(manual){
   stopTimer();
