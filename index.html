@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#141619">
+<title>Impulso</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<!-- iOS standalone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Impulso">
+<meta name="application-name" content="Impulso">
+<meta name="description" content="Sistema de execução para quem trava: um próximo passo por vez, foco cronometrado e trackers de corpo e sono.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141619;
+    --bg-2:#0E1012;
+    --panel:#1D2126;
+    --panel-2:#252A31;
+    --panel-3:#2E343C;
+    --line:#333A42;
+    --line-soft:#282E35;
+    --ink:#ECE8E1;
+    --muted:#8B929B;
+    --faint:#5C636C;
+    --signal:#F0A63C;
+    --signal-2:#FFC46B;
+    --signal-soft:rgba(240,166,60,.14);
+    --signal-line:rgba(240,166,60,.45);
+    --teal:#54B79C;
+    --teal-soft:rgba(84,183,156,.14);
+    --danger:#E37A5C;
+    --danger-soft:rgba(227,122,92,.15);
+    --good:#54B79C;
+    --radius:14px;
+    --shadow:0 10px 30px rgba(0,0,0,.38), 0 1px 0 rgba(255,255,255,.04) inset;
+    --sat:env(safe-area-inset-top);
+    --sab:env(safe-area-inset-bottom);
+    --sal:env(safe-area-inset-left);
+    --sar:env(safe-area-inset-right);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%;background:var(--bg-2)}
+  body{
+    font-family:"Instrument Sans",system-ui,sans-serif;
+    background:var(--bg);
+    background-image:radial-gradient(120% 60% at 50% -10%, rgba(240,166,60,.06), transparent 60%);
+    background-attachment:fixed;
+    color:var(--ink);
+    line-height:1.5;
+    padding:calc(var(--sat) + 18px) calc(var(--sar) + 16px) calc(var(--sab) + 84px) calc(var(--sal) + 16px);
+    min-height:100vh;
+    min-height:100dvh;
+    -webkit-font-smoothing:antialiased;
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
+    touch-action:manipulation;
+    overscroll-behavior-y:none;
+  }
+  input,textarea{-webkit-user-select:text;user-select:text}
+  button{touch-action:manipulation}
+  .wrap{max-width:720px;margin:0 auto}
+  h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em;line-height:1.04}
+  .mono{font-family:"JetBrains Mono",monospace}
+  ::selection{background:var(--signal-soft)}
+
+  /* header */
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand h1{font-size:25px;font-weight:800;position:relative;padding-left:16px}
+  .brand h1::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 10px 1px var(--signal-line)}
+  .brand .tag{font-family:"JetBrains Mono";font-size:9.5px;font-weight:500;text-transform:uppercase;letter-spacing:.18em;color:var(--faint)}
+  .today{font-family:"JetBrains Mono";font-size:11px;color:var(--muted);text-transform:lowercase}
+  .pills{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--panel-2);border:1px solid var(--line-soft);padding:5px 10px;border-radius:8px;font-family:"JetBrains Mono";font-size:11px;color:var(--muted);white-space:nowrap}
+  .pill b{color:var(--ink);font-weight:700}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+  .pill.on .dot{background:var(--signal);box-shadow:0 0 7px var(--signal-line)}
+
+  /* hero — instrumento principal */
+  .hero{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:24px 22px 22px;margin-bottom:16px;overflow:hidden}
+  .hero::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--signal),#c9832a);box-shadow:0 0 16px var(--signal-line)}
+  .hero::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
+  .hero-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .eyebrow{font-family:"JetBrains Mono";font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--signal)}
+  .hero-chip{font-family:"JetBrains Mono";font-size:11px;font-weight:600;padding:4px 9px;border-radius:6px;background:var(--panel-2);color:var(--muted);white-space:nowrap;border:1px solid var(--line-soft)}
+  .hero-chip.od{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+  .hero-chip.td{background:var(--signal-soft);color:var(--signal);border-color:transparent}
+  .hero-chip.tm{background:var(--teal-soft);color:var(--teal);border-color:transparent}
+  .hero-chip.fut{background:var(--panel-2);color:var(--muted)}
+  .hero-chip.pin{background:var(--signal-soft);color:var(--signal);border-color:transparent}
+  .action{font-family:"Bricolage Grotesque";font-weight:700;font-size:clamp(23px,5.6vw,33px);line-height:1.1;color:var(--ink);margin-bottom:14px;word-break:break-word}
+  .action.empty{color:var(--muted);font-weight:600;font-size:19px;margin-bottom:10px}
+  .hero-step-input{width:100%;border:1px dashed var(--line);background:var(--panel-2);border-radius:10px;padding:12px 12px;font-family:inherit;font-size:16px;color:var(--ink);margin-bottom:12px}
+  .hero-step-input::placeholder{color:var(--faint)}
+  .hero-step-input:focus{outline:none;border-style:solid;border-color:var(--signal-line);background:var(--bg-2)}
+  .hero-sub{display:none;align-items:flex-start;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:12px}
+  .sub-check{flex-shrink:0;width:34px;height:34px;border-radius:50%;border:2px solid var(--signal);background:transparent;color:var(--signal);cursor:pointer;font-size:15px;line-height:1;transition:.15s;display:grid;place-items:center}
+  .sub-check:active{background:var(--signal);color:#1a1205;transform:scale(.94)}
+  .sub-body{flex:1;min-width:0}
+  .sub-text{font-size:15px;font-weight:600;color:var(--ink);word-break:break-word}
+  .sub-prog{font-family:"JetBrains Mono";font-size:10.5px;color:var(--muted);margin-top:4px;letter-spacing:.03em}
+  .sub-edit{background:none;border:none;color:var(--signal);font:inherit;font-size:11px;text-decoration:underline;cursor:pointer;padding:0}
+  .break-btn{background:var(--signal-soft);border:1px solid transparent;color:var(--signal);font-family:inherit;font-size:13px;font-weight:600;padding:13px 13px;border-radius:11px;cursor:pointer;width:100%;text-align:left;margin-bottom:12px;transition:.15s}
+  .break-btn:active{background:var(--signal);color:#1a1205;transform:scale(.99)}
+  .due-line{font-family:"JetBrains Mono";font-size:11px;color:var(--muted);margin-bottom:16px;min-height:1px;letter-spacing:.02em}
+  .due-line b.od,.due-line .od{color:var(--danger);font-weight:700}
+  .hero-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn-start{background:linear-gradient(180deg,#F3AC44,#DA8E2C);color:#1a1205;border:none;font-family:"Bricolage Grotesque";font-weight:700;font-size:16px;padding:14px 24px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;box-shadow:0 0 20px rgba(240,166,60,.28);transition:transform .12s ease,box-shadow .15s ease;min-height:48px}
+  .btn-start:active{transform:scale(.97)}
+  .btn-start:disabled{background:var(--panel-3);color:var(--faint);cursor:not-allowed;box-shadow:none;transform:none}
+  .btn-ghost{background:none;border:1px solid var(--line);color:var(--muted);padding:13px 16px;border-radius:12px;cursor:pointer;font-size:13.5px;font-family:inherit;transition:.15s;min-height:48px}
+  .btn-ghost:active{border-color:var(--muted);color:var(--ink);transform:scale(.97)}
+
+  /* cards */
+  .grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+  .trackers{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:640px){.trackers{grid-template-columns:repeat(3,1fr)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 16px;box-shadow:var(--shadow)}
+  .card h2{font-family:"JetBrains Mono";font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+  .card h2::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--teal);flex-shrink:0}
+  .card .sub{font-size:12px;color:var(--faint);margin-bottom:14px;line-height:1.45}
+  .full{grid-column:1/-1}
+
+  /* capture */
+  .capture{display:flex;gap:8px;margin-bottom:14px}
+  .capture input{flex:1;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:12px 12px;font-family:inherit;font-size:16px;color:var(--ink)}
+  .capture input::placeholder{color:var(--faint)}
+  .capture input:focus{outline:none;border-color:var(--teal);background:var(--bg-2)}
+  .capture button{background:var(--teal);color:#08110d;border:none;border-radius:10px;padding:0 18px;font-weight:700;cursor:pointer;font-size:22px;line-height:1;min-width:52px}
+  .capture button:active{filter:brightness(1.1);transform:scale(.96)}
+
+  /* task list */
+  .tasks{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .task{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel-2);transition:border-color .15s}
+  .task.isnext{border-color:var(--signal-line);background:linear-gradient(var(--signal-soft),var(--signal-soft)),var(--panel-2)}
+  .task.done{opacity:.5}
+  .task-top{display:flex;align-items:flex-start;gap:10px}
+  .task-main{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .task-title{font-size:14.5px;font-weight:600;word-break:break-word;color:var(--ink)}
+  .task.done .task-title{text-decoration:line-through;font-weight:400}
+  .chip-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chk{width:26px;height:26px;border:1.5px solid var(--muted);border-radius:7px;background:transparent;cursor:pointer;flex-shrink:0;margin-top:1px;display:grid;place-items:center;color:#08110d;font-size:15px}
+  .chk.on{background:var(--teal);border-color:var(--teal)}
+  .chk:active{transform:scale(.9)}
+  .task-x{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:6px 8px;flex-shrink:0;min-width:34px;min-height:34px}
+  .task-x:active{color:var(--danger)}
+  .pin{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:6px 8px;flex-shrink:0;transition:color .12s;min-width:34px;min-height:34px}
+  .pin:active{color:var(--signal);transform:scale(.9)}
+  .pin.on{color:var(--signal);text-shadow:0 0 8px var(--signal-line)}
+  .prazo-chip{align-self:flex-start;border:none;cursor:pointer;font-family:"JetBrains Mono";font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:6px;background:var(--panel-3);color:var(--muted)}
+  .prazo-chip.none{background:transparent;border:1px dashed var(--line);color:var(--faint);font-weight:500}
+  .prazo-chip.od{background:var(--danger-soft);color:var(--danger)}
+  .prazo-chip.td{background:var(--signal-soft);color:var(--signal)}
+  .prazo-chip.tm{background:var(--teal-soft);color:var(--teal)}
+  .prazo-chip.fut{background:var(--panel-3);color:var(--muted)}
+  .sub-badge{font-family:"JetBrains Mono";font-size:10px;font-weight:700;color:var(--teal);background:var(--teal-soft);padding:3px 8px;border-radius:6px}
+  .prazo-ctrls{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .pc{background:var(--panel-3);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:13px;font-weight:600;padding:9px 12px;border-radius:8px;cursor:pointer;min-height:40px}
+  .pc:active{border-color:var(--signal-line);color:var(--signal);transform:scale(.97)}
+  .pc.dim{color:var(--muted);font-weight:500}
+  .pc-date{border:1px solid var(--line);border-radius:8px;padding:8px 8px;font-family:"JetBrains Mono";font-size:13px;color:var(--ink);background:var(--panel-3);color-scheme:dark;min-height:40px}
+  .pc-date:focus{outline:none;border-color:var(--signal-line)}
+  .acc{list-style:none;padding:0}
+  .acc-head{width:100%;text-align:left;background:none;border:none;color:var(--muted);font-family:"JetBrains Mono";font-size:11px;font-weight:600;cursor:pointer;padding:10px 2px;letter-spacing:.06em;text-transform:uppercase}
+  .acc-head:active{color:var(--ink)}
+  .tasks.sub{margin-top:8px}
+  .empty-note{font-size:13px;color:var(--faint);text-align:center;padding:14px 4px;font-style:italic}
+
+  /* trackers */
+  .track-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .track-num{font-family:"Bricolage Grotesque";font-weight:700;font-size:17px;color:var(--ink)}
+  .track-num small{font-weight:400;color:var(--muted);font-size:11.5px;font-family:"Instrument Sans"}
+  .btn-log{background:var(--panel-3);border:1px solid var(--line);color:var(--ink);font-size:12px;font-weight:600;padding:10px 13px;border-radius:9px;cursor:pointer;font-family:inherit;min-height:42px}
+  .btn-log:active{border-color:var(--teal);color:var(--teal);transform:scale(.97)}
+  .btn-log.done{background:var(--teal);border-color:var(--teal);color:#08110d;cursor:default}
+  .dots{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+  .wdot{width:20px;height:7px;border-radius:3px;background:var(--line)}
+  .wdot.on{background:var(--teal);box-shadow:0 0 6px var(--teal-soft)}
+  .goal-line{font-size:11px;color:var(--faint);margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);line-height:1.45}
+
+  /* overlay / sheet */
+  .overlay{position:fixed;inset:0;background:rgba(8,10,12,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:calc(var(--sat) + 14px) calc(var(--sar) + 16px) calc(var(--sab) + 14px) calc(var(--sal) + 16px);z-index:50}
+  .overlay.open{display:flex}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:460px;width:100%;padding:26px 22px;box-shadow:0 24px 70px rgba(0,0,0,.55);max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .sheet h2{font-family:"Bricolage Grotesque";font-size:21px;font-weight:700;margin-bottom:4px;color:var(--ink)}
+  .sheet .lead{font-size:13.5px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+  .ritual-item{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
+  .ritual-item:last-of-type{border-bottom:none}
+  .ritual-item .rc{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--muted);flex-shrink:0;display:grid;place-items:center;color:#08110d;font-size:15px;transition:.12s;background:transparent}
+  .ritual-item.on .rc{background:var(--teal);border-color:var(--teal)}
+  .ritual-item .rtxt{font-size:14px;font-weight:600;color:var(--ink)}
+  .ritual-item .rsub{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.4}
+  .move-nudge{background:var(--signal-soft);border:1px solid transparent;border-radius:12px;padding:13px 14px;margin:16px 0;font-size:13px;color:#e0a44e;line-height:1.5}
+  .move-nudge b{color:var(--signal)}
+  .sheet-actions{display:flex;gap:10px;margin-top:22px}
+  .sheet-actions button{flex:1;padding:14px;border-radius:12px;font-family:"Bricolage Grotesque";font-weight:700;font-size:15px;cursor:pointer;border:none;min-height:50px}
+  .primary{background:var(--teal);color:#08110d}
+  .primary:active{filter:brightness(1.1);transform:scale(.98)}
+  .secondary{background:var(--panel-2);color:var(--muted);border:1px solid var(--line)!important}
+  .secondary:active{color:var(--ink);transform:scale(.98)}
+
+  /* timer — a assinatura */
+  .timer-task{text-align:center;font-family:"JetBrains Mono";font-size:12px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em}
+  .timer-task b{color:var(--signal);font-weight:700;text-transform:none;letter-spacing:0;font-family:"Instrument Sans"}
+  .ring-wrap{position:relative;width:230px;height:230px;margin:4px auto 6px}
+  .ring{width:230px;height:230px;transform:rotate(-90deg)}
+  .ring-bg{fill:none;stroke:var(--panel-3);stroke-width:10}
+  .ring-fg{fill:none;stroke:var(--signal);stroke-width:10;stroke-linecap:round;filter:drop-shadow(0 0 6px var(--signal-line));transition:stroke-dashoffset .95s linear}
+  .clock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono";font-weight:700;font-size:52px;letter-spacing:-.02em;color:var(--ink)}
+  .clock.warn{color:var(--signal)}
+  .meter{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;min-height:10px}
+  .cell{width:16px;height:10px;border-radius:3px;background:var(--panel-3)}
+  .cell.on{background:var(--teal);box-shadow:0 0 6px var(--teal-soft)}
+  .cell.live{background:var(--signal);box-shadow:0 0 10px var(--signal-line);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .len-pick{display:flex;gap:6px;justify-content:center;margin-bottom:18px}
+  .len-pick button{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);font-size:12.5px;padding:9px 14px;border-radius:8px;cursor:pointer;font-family:"JetBrains Mono";font-weight:500;min-height:40px}
+  .len-pick button.on{background:var(--signal);color:#1a1205;border-color:var(--signal)}
+  .stuck-btn{width:100%;margin-top:12px;background:none;border:1px solid var(--danger);color:var(--danger);padding:13px;border-radius:12px;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;min-height:48px}
+  .stuck-btn:active{background:var(--danger);color:#160b08}
+
+  /* distração */
+  .distr{margin-top:12px}
+  .distr-toggle{width:100%;background:none;border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;padding:12px;border-radius:12px;cursor:pointer;min-height:46px}
+  .distr-toggle:active{border-color:var(--signal-line);color:var(--signal)}
+  .distr-box{display:none;gap:7px;margin-top:8px}
+  .distr-box.open{display:flex}
+  .distr-box input{flex:1;border:1px solid var(--signal-line);border-radius:10px;padding:12px;font-family:inherit;font-size:16px;background:var(--bg-2);color:var(--ink)}
+  .distr-box input:focus{outline:none}
+
+  /* travei */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .chip{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:10px 15px;border-radius:999px;font-size:13px;cursor:pointer;font-family:inherit;min-height:42px}
+  .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .micro-label{font-size:13px;font-weight:600;margin-bottom:8px;display:block;color:var(--ink)}
+  .micro-hint{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.45}
+  .sheet textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-family:inherit;font-size:16px;resize:vertical;min-height:64px;background:var(--panel-2);color:var(--ink)}
+  .sheet textarea:focus{outline:none;border-color:var(--signal-line);background:var(--bg-2)}
+  .sheet textarea::placeholder{color:var(--faint)}
+
+  /* done burst */
+  .done-burst{text-align:center;padding:8px 0}
+  .done-burst .big{font-size:44px;margin-bottom:6px}
+  .done-burst h2{margin-bottom:6px}
+
+  /* editor de passos */
+  .step-edit-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .step-edit-row .sn{width:24px;height:24px;flex-shrink:0;border-radius:50%;background:var(--signal);color:#1a1205;font-size:12px;font-weight:700;display:grid;place-items:center;font-family:"JetBrains Mono"}
+  .step-edit{flex:1;border:1px solid var(--line);border-radius:9px;padding:11px 10px;font-family:inherit;font-size:16px;color:var(--ink);background:var(--panel-2)}
+  .step-edit:focus{outline:none;border-color:var(--signal-line);background:var(--bg-2)}
+
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:calc(var(--sab) + 26px);transform:translate(-50%,20px);background:var(--panel-3);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:500;padding:11px 18px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* install hint (iOS) */
+  .install{position:fixed;left:calc(var(--sal) + 12px);right:calc(var(--sar) + 12px);bottom:calc(var(--sab) + 12px);background:var(--panel);border:1px solid var(--signal-line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);padding:14px 14px 14px 16px;display:none;align-items:center;gap:12px;z-index:70;max-width:460px;margin:0 auto}
+  .install.show{display:flex;animation:slideup .35s ease}
+  @keyframes slideup{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .install .ii{width:40px;height:40px;border-radius:10px;flex-shrink:0}
+  .install .it{flex:1;min-width:0}
+  .install .it b{font-family:"Bricolage Grotesque";font-size:14px;color:var(--ink);display:block}
+  .install .it span{font-size:12px;color:var(--muted);line-height:1.4;display:block;margin-top:2px}
+  .install .it .sh{display:inline-flex;width:16px;height:16px;vertical-align:-3px;margin:0 2px}
+  .install .ix{background:none;border:none;color:var(--faint);font-size:20px;cursor:pointer;padding:6px 8px;flex-shrink:0;align-self:flex-start}
+  .install .ix:active{color:var(--ink)}
+
+  footer{text-align:center;font-size:11px;color:var(--faint);margin-top:30px;line-height:1.7}
+  a.reset,.reset{color:var(--faint);text-decoration:underline;cursor:pointer;background:none;border:none;font:inherit}
+  .reset:active{color:var(--danger)}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>Impulso</h1>
+      <span class="tag">sistema de execução</span>
+    </div>
+    <div style="text-align:right">
+      <div class="today" id="today"></div>
+      <div class="pills" id="pills" style="margin-top:6px"></div>
+    </div>
+  </header>
+
+  <!-- HERO: o próximo passo -->
+  <section class="hero">
+    <div class="hero-head">
+      <div class="eyebrow">O próximo passo</div>
+      <span class="hero-chip" id="heroChip"></span>
+    </div>
+    <div class="action" id="heroAction">Carregando…</div>
+    <div id="heroStepZone">
+      <input class="hero-step-input" id="heroStepInput" placeholder="menor passo possível…" onchange="setHeroStep(this.value)">
+      <div class="hero-sub" id="heroSub"></div>
+      <button class="break-btn" id="breakBtn" onclick="openBreakdown(currentNextId())">✂ Não sei por onde começar — quebrar em passos</button>
+    </div>
+    <div class="due-line" id="dueLine"></div>
+    <div class="hero-actions">
+      <button class="btn-start" id="startBtn" onclick="openRitual()">▶ Começar foco</button>
+      <button class="btn-ghost" onclick="openStuck()">Travei</button>
+    </div>
+  </section>
+
+  <!-- TAREFAS -->
+  <section class="card" style="margin-bottom:16px">
+    <h2>Tira da cabeça</h2>
+    <div class="sub">Jogue tudo aqui. O que não está no sistema, não existe — e não pesa na sua cabeça.</div>
+    <div class="capture">
+      <input id="capInput" placeholder="Ex: mandar orçamento pra barbearia do João" onkeydown="if(event.key==='Enter')addTask()">
+      <button onclick="addTask()">+</button>
+    </div>
+    <ul class="tasks" id="taskList"></ul>
+  </section>
+
+  <div class="trackers">
+    <!-- FOCO -->
+    <section class="card">
+      <h2>Foco</h2>
+      <div class="sub">O único tracker que você não preenche — você conquista. Cada bloco concluído entra aqui.</div>
+      <div class="track-row">
+        <div class="track-num" id="fcToday">0<small> blocos hoje</small></div>
+      </div>
+      <div class="dots" id="fcDots"></div>
+      <div class="goal-line" id="fcWeek">0 blocos esta semana · a meta é só não zerar o dia.</div>
+    </section>
+
+    <!-- CORPO -->
+    <section class="card">
+      <h2>Corpo</h2>
+      <div class="sub">Aeróbico melhora foco na hora e, mantido, melhora a atenção de base.</div>
+      <div class="track-row">
+        <div class="track-num" id="exWeek">0<small>/5 esta semana</small></div>
+        <button class="btn-log" id="exBtn" onclick="logExercise()">Registrar treino</button>
+      </div>
+      <div class="dots" id="exDots"></div>
+      <div class="goal-line">Meta da pesquisa: 3–5×/semana, intensidade moderada, por ≥12 semanas.</div>
+    </section>
+
+    <!-- SONO -->
+    <section class="card">
+      <h2>Sono</h2>
+      <div class="sub">Sono ruim amplifica todos os sintomas. Constância vale mais que quantidade.</div>
+      <div class="track-row">
+        <div class="track-num" id="slStreak">0<small> dias seguidos</small></div>
+        <button class="btn-log" id="slBtn" onclick="logSleep()">Dormi no horário</button>
+      </div>
+      <div class="dots" id="slDots"></div>
+      <div class="goal-line">Marque quando dormir perto do horário que planejou.</div>
+    </section>
+  </div>
+
+  <footer>
+    Baseado em revisões sistemáticas e meta-análises (2024–2025): TCC, exercício aeróbico, ambiente e sono.<br>
+    Triagem ≠ diagnóstico. Se os sintomas pesarem no dia a dia, busque avaliação profissional.<br>
+    <button class="reset" onclick="hardReset()">zerar tudo</button>
+  </footer>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<!-- INSTALL HINT (iOS Safari) -->
+<div class="install" id="install">
+  <img class="ii" src="icons/icon-192.png" alt="">
+  <div class="it">
+    <b>Instale o Impulso</b>
+    <span>Toque em Compartilhar
+      <svg class="sh" viewBox="0 0 50 50" fill="none" stroke="#54B79C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M25 33V6M16 15l9-9 9 9M12 24v18a2 2 0 002 2h22a2 2 0 002-2V24"/></svg>
+      e depois em <b style="display:inline">Adicionar à Tela de Início</b>.</span>
+  </div>
+  <button class="ix" onclick="dismissInstall()" aria-label="Fechar">✕</button>
+</div>
+
+<script>
+/* ---------- storage layer (localStorage) ---------- */
+const KEY='impulso:v1';
+function loadState(){
+  try{ const r=localStorage.getItem(KEY); return r?JSON.parse(r):null; }
+  catch(e){ return null; }
+}
+function saveState(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ---------- state ---------- */
+let state={
+  tasks:[],          // {id,text,step,done,prazo:null|"YYYY-MM-DD",deferred:false,sub:[]}
+  pinnedId:null,     // override manual do próximo passo (gruda até concluir)
+  exercise:[],       // ["YYYY-MM-DD"]
+  sleep:[],          // ["YYYY-MM-DD"]
+  focus:[],          // [{d:"YYYY-MM-DD", m:minutos}] blocos concluídos
+  focusMin:25,
+  start:null         // first-use date (12-week tracker)
+};
+let expandedId=null; // UI: qual tarefa está com controles de prazo abertos (não persiste)
+let openSections={depois:false,done:false}; // UI: accordions recolhidos por padrão
+
+/* ---------- date helpers ---------- */
+function iso(d=new Date()){
+  // ISO local (evita virada de dia por fuso do toISOString em UTC)
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+function todayISO(){return iso();}
+function weekDatesDone(arr){
+  const now=new Date(); const day=(now.getDay()+6)%7; // monday=0
+  const monday=new Date(now); monday.setDate(now.getDate()-day); monday.setHours(0,0,0,0);
+  return arr.filter(s=>{const d=new Date(s+'T00:00:00'); return d>=monday;}).length;
+}
+function streak(arr){
+  const set=new Set(arr); let n=0; let d=new Date();
+  if(!set.has(iso(d))) d.setDate(d.getDate()-1);
+  while(set.has(iso(d))){n++; d.setDate(d.getDate()-1);}
+  return n;
+}
+function fmtToday(){
+  return new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+}
+function focusDates(){return state.focus.map(f=>f.d);}
+function focusToday(){return state.focus.filter(f=>f.d===todayISO()).length;}
+function focusWeek(){return weekDatesDone(state.focus.map(f=>f.d));}
+
+/* ---------- render ---------- */
+function render(){
+  document.getElementById('today').textContent=fmtToday();
+  renderHero();
+  renderTasks();
+  renderTrackers();
+  renderPills();
+}
+
+/* ---------- motor de urgência (o sistema escolhe por prazo) ---------- */
+function activeTasks(){return state.tasks.filter(t=>!t.done && !t.deferred);}
+function urgencyCmp(a,b){
+  const ax=a.prazo, bx=b.prazo;
+  if(ax&&bx) return ax<bx?-1:ax>bx?1:a.id-b.id;
+  if(ax&&!bx) return -1;
+  if(!ax&&bx) return 1;
+  return a.id-b.id;
+}
+function nextTask(){
+  const act=activeTasks();
+  if(!act.length) return null;
+  if(state.pinnedId){
+    const p=act.find(t=>t.id===state.pinnedId);
+    if(p) return p;
+    state.pinnedId=null;
+  }
+  return act.slice().sort(urgencyCmp)[0];
+}
+function tomorrowISO(){const d=new Date(); d.setDate(d.getDate()+1); return iso(d);}
+function prazoLabel(p){
+  if(!p) return null;
+  const today=todayISO();
+  if(p<today) return {t:'atrasada', cls:'od'};
+  if(p===today) return {t:'hoje', cls:'td'};
+  if(p===tomorrowISO()) return {t:'amanhã', cls:'tm'};
+  const d=Math.round((new Date(p+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);
+  if(d<=7) return {t:'em '+d+' dias', cls:'fut'};
+  return {t:new Date(p+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}), cls:'fut'};
+}
+function dueCounts(){
+  const act=activeTasks(); const today=todayISO();
+  return {
+    hoje: act.filter(t=>t.prazo===today).length,
+    atrasada: act.filter(t=>t.prazo && t.prazo<today).length
+  };
+}
+
+function renderHero(){
+  const t=nextTask();
+  const a=document.getElementById('heroAction');
+  const chip=document.getElementById('heroChip');
+  const stepZone=document.getElementById('heroStepZone');
+  const stepInput=document.getElementById('heroStepInput');
+  const subEl=document.getElementById('heroSub');
+  const breakBtn=document.getElementById('breakBtn');
+  const dueLine=document.getElementById('dueLine');
+  const btn=document.getElementById('startBtn');
+
+  const dc=dueCounts(); const parts=[];
+  if(dc.atrasada>0) parts.push('<b class="od">'+dc.atrasada+' atrasada'+(dc.atrasada>1?'s':'')+'</b>');
+  if(dc.hoje>0) parts.push(dc.hoje+' vence'+(dc.hoje>1?'m':'')+' hoje');
+  dueLine.innerHTML = parts.length ? '🕒 '+parts.join(' · ') : '';
+
+  if(!t){
+    a.textContent='Adicione uma tarefa — o sistema escolhe por você';
+    a.classList.add('empty');
+    chip.className='hero-chip'; chip.textContent='';
+    stepZone.style.display='none';
+    btn.disabled=true;
+    return;
+  }
+  a.classList.remove('empty');
+  a.textContent=t.text;
+  btn.disabled=false;
+  const lb=prazoLabel(t.prazo);
+  const pinned=t.id===state.pinnedId;
+  if(lb){ chip.className='hero-chip '+lb.cls; chip.textContent=(pinned?'★ ':'⏳ ')+lb.t; }
+  else { chip.className='hero-chip'+(pinned?' pin':''); chip.textContent=pinned?'★ fixada':'sem prazo'; }
+
+  stepZone.style.display='block';
+  const sub=t.sub||[];
+  const idx=sub.findIndex(s=>!s.done);
+  if(sub.length && idx>=0){
+    stepInput.style.display='none';
+    breakBtn.style.display='none';
+    subEl.style.display='flex';
+    subEl.innerHTML=
+      '<button class="sub-check" onclick="completeSub('+t.id+')" title="concluir este passo">○</button>'+
+      '<div class="sub-body"><div class="sub-text">'+escapeHtml(sub[idx].text)+'</div>'+
+      '<div class="sub-prog">passo '+(idx+1)+' de '+sub.length+' · <button class="sub-edit" onclick="openBreakdown('+t.id+')">editar</button></div></div>';
+  } else {
+    subEl.style.display='none';
+    stepInput.style.display='block';
+    stepInput.value=t.step||'';
+    breakBtn.style.display='block';
+    breakBtn.textContent = sub.length ? '✂ Refazer os passos' : '✂ Não sei por onde começar — quebrar em passos';
+  }
+}
+function currentNextId(){const t=nextTask();return t?t.id:null;}
+function setHeroStep(v){const t=nextTask(); if(t){t.step=v.trim(); commit();}}
+function completeSub(id){
+  const t=state.tasks.find(x=>x.id===id); if(!t||!t.sub)return;
+  const i=t.sub.findIndex(s=>!s.done); if(i>=0)t.sub[i].done=true;
+  const remaining=t.sub.some(s=>!s.done);
+  commit();
+  if(!remaining) toast('Todos os passos feitos 🎉 — conclua a tarefa quando quiser');
+}
+
+function renderPills(){
+  const p=document.getElementById('pills');
+  const ex=weekDatesDone(state.exercise);
+  const sl=streak(state.sleep);
+  const ft=focusToday();
+  p.innerHTML=
+    '<span class="pill '+(ft>0?'on':'')+'"><span class="dot"></span>foco <b>'+ft+'</b></span>'+
+    '<span class="pill '+(ex>0?'on':'')+'"><span class="dot"></span>mov <b>'+ex+'</b>/5</span>'+
+    '<span class="pill '+(sl>0?'on':'')+'"><span class="dot"></span>sono <b>'+sl+'</b>d</span>';
+}
+
+function renderTasks(){
+  const list=document.getElementById('taskList');
+  if(state.tasks.length===0){
+    list.innerHTML='<div class="empty-note">Vazio é bom. Quando algo aparecer na cabeça, joga aqui — depois você marca o prazo.</div>';
+    return;
+  }
+  const nx=nextTask();
+  const act=activeTasks().slice().sort(urgencyCmp);
+  const def=state.tasks.filter(t=>t.deferred && !t.done);
+  const done=state.tasks.filter(t=>t.done);
+
+  let html = act.map(t=>taskRow(t, !!(nx&&nx.id===t.id), false)).join('');
+  if(def.length) html += accordion('depois','Depois · '+def.length, def.map(t=>taskRow(t,false,true)).join(''));
+  if(done.length) html += accordion('done','Concluídas · '+done.length, done.map(t=>taskRow(t,false,false)).join(''));
+  list.innerHTML=html;
+}
+function taskRow(t,isNext,isDeferred){
+  const lb=prazoLabel(t.prazo);
+  const pinned=t.id===state.pinnedId;
+  const chip = t.done ? '' :
+    '<button class="prazo-chip '+(lb?lb.cls:'none')+'" onclick="toggleExpand('+t.id+')">'+
+      (lb?((pinned?'★ ':'')+lb.t):'＋ prazo')+'</button>';
+  const pin = (t.done||isDeferred) ? '' :
+    '<button class="pin'+(pinned?' on':'')+'" title="fixar como próximo passo" onclick="togglePin('+t.id+')">★</button>';
+  const sub=t.sub||[];
+  const subBadge = (!t.done && sub.length)
+    ? '<span class="sub-badge">✂ '+sub.filter(s=>s.done).length+'/'+sub.length+'</span>' : '';
+  let row='<li class="task '+(isNext?'isnext ':'')+(t.done?'done':'')+'" data-id="'+t.id+'">'+
+    '<div class="task-top">'+
+      '<div class="chk '+(t.done?'on':'')+'" onclick="toggleDone('+t.id+')">'+(t.done?'✓':'')+'</div>'+
+      '<div class="task-main"><div class="task-title">'+escapeHtml(t.text)+'</div><div class="chip-row">'+chip+subBadge+'</div></div>'+
+      pin+
+      '<button class="task-x" onclick="delTask('+t.id+')">✕</button>'+
+    '</div>';
+  if(expandedId===t.id && !t.done){
+    const breakLine = '<div class="prazo-ctrls" style="border-top:none;padding-top:0">'+
+      '<button class="pc" onclick="openBreakdown('+t.id+')">✂ '+(sub.length?'Editar passos':'Quebrar em passos')+'</button>'+
+      (sub.length?'<button class="pc dim" onclick="clearSubs('+t.id+')">Limpar passos</button>':'')+
+      '</div>';
+    row += isDeferred
+      ? '<div class="prazo-ctrls"><button class="pc" onclick="reativar('+t.id+')">↑ Reativar</button></div>'+breakLine
+      : '<div class="prazo-ctrls">'+
+          '<button class="pc" onclick="setPrazo('+t.id+',\'hoje\')">Hoje</button>'+
+          '<button class="pc" onclick="setPrazo('+t.id+',\'amanha\')">Amanhã</button>'+
+          '<input class="pc-date" type="date" value="'+(t.prazo||'')+'" onchange="setPrazo('+t.id+',this.value)">'+
+          (t.prazo?'<button class="pc" onclick="clearPrazo('+t.id+')">Limpar</button>':'')+
+          '<button class="pc dim" onclick="adiar('+t.id+')">Depois ⤵</button>'+
+        '</div>';
+  }
+  return row+'</li>';
+}
+function accordion(key,label,inner){
+  const open=openSections[key];
+  return '<li class="acc">'+
+    '<button class="acc-head" onclick="toggleSection(\''+key+'\')">'+(open?'▾':'▸')+' '+label+'</button>'+
+    (open?'<ul class="tasks sub">'+inner+'</ul>':'')+'</li>';
+}
+
+function renderTrackers(){
+  document.getElementById('fcToday').innerHTML=focusToday()+'<small> blocos hoje</small>';
+  document.getElementById('fcDots').innerHTML=weekDots(focusDates());
+  document.getElementById('fcWeek').textContent=focusWeek()+' blocos esta semana · a meta é só não zerar o dia.';
+
+  const ex=weekDatesDone(state.exercise);
+  document.getElementById('exWeek').innerHTML=ex+'<small>/5 esta semana</small>';
+  const exBtn=document.getElementById('exBtn');
+  const exToday=state.exercise.includes(todayISO());
+  exBtn.textContent=exToday?'✓ Treinou hoje':'Registrar treino';
+  exBtn.classList.toggle('done',exToday);
+  document.getElementById('exDots').innerHTML=weekDots(state.exercise);
+
+  const sl=streak(state.sleep);
+  document.getElementById('slStreak').innerHTML=sl+'<small> dias seguidos</small>';
+  const slBtn=document.getElementById('slBtn');
+  const slToday=state.sleep.includes(todayISO());
+  slBtn.textContent=slToday?'✓ Registrado':'Dormi no horário';
+  slBtn.classList.toggle('done',slToday);
+  document.getElementById('slDots').innerHTML=weekDots(state.sleep);
+}
+function weekDots(arr){
+  let html='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    html+='<span class="wdot '+(arr.includes(iso(d))?'on':'')+'"></span>';
+  }
+  return html;
+}
+
+/* ---------- task actions ---------- */
+function addTask(){
+  const inp=document.getElementById('capInput');
+  const v=inp.value.trim(); if(!v)return;
+  const id=Date.now();
+  state.tasks.unshift({id,text:v,step:'',done:false,prazo:null,deferred:false,sub:[]});
+  inp.value=''; commit();
+}
+function toggleExpand(id){expandedId=(expandedId===id?null:id); render();}
+function toggleSection(key){openSections[key]=!openSections[key]; render();}
+function setPrazo(id,v){
+  const t=state.tasks.find(t=>t.id===id); if(!t)return;
+  if(v==='hoje') t.prazo=todayISO();
+  else if(v==='amanha') t.prazo=tomorrowISO();
+  else if(v) t.prazo=v;
+  else return;
+  t.deferred=false;
+  expandedId=null; commit();
+}
+function clearPrazo(id){const t=state.tasks.find(t=>t.id===id); if(t){t.prazo=null; expandedId=null; commit();}}
+function adiar(id){const t=state.tasks.find(t=>t.id===id); if(t){t.deferred=true; if(state.pinnedId===id)state.pinnedId=null; expandedId=null; commit();}}
+function reativar(id){const t=state.tasks.find(t=>t.id===id); if(t){t.deferred=false; expandedId=null; commit();}}
+function togglePin(id){state.pinnedId=(state.pinnedId===id?null:id); commit(); window.scrollTo({top:0,behavior:'smooth'});}
+function toggleDone(id){
+  const t=state.tasks.find(t=>t.id===id); if(!t)return;
+  t.done=!t.done;
+  if(t.done && state.pinnedId===id) state.pinnedId=null;
+  commit();
+}
+function delTask(id){
+  state.tasks=state.tasks.filter(t=>t.id!==id);
+  if(state.pinnedId===id) state.pinnedId=null;
+  commit();
+}
+
+/* ---------- trackers ---------- */
+function logExercise(){const d=todayISO(); if(!state.exercise.includes(d))state.exercise.push(d); commit();}
+function logSleep(){const d=todayISO(); if(!state.sleep.includes(d))state.sleep.push(d); commit();}
+
+/* ---------- toast ---------- */
+let toastTimer=null;
+function toast(msg){
+  let el=document.getElementById('toast');
+  if(!el){el=document.createElement('div'); el.id='toast'; el.className='toast'; document.body.appendChild(el);}
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* ---------- quebra de tarefa em passos (manual) ---------- */
+let breakTaskId=null;
+function openBreakdown(id){
+  if(!id)return;
+  breakTaskId=id;
+  const t=state.tasks.find(x=>x.id===id); if(!t)return;
+  renderStepEditor(t.sub && t.sub.length ? t.sub.map(s=>s.text) : []);
+  overlay.classList.add('open');
+}
+function renderStepEditor(steps){
+  const rows=(steps.length?steps:['','','']).map((s,i)=>stepEditorRow(s,i)).join('');
+  sheet.innerHTML=`
+    <h2>Quebre em passos</h2>
+    <p class="lead">Uma pergunta de cada vez: qual o <b>primeiro movimento físico</b>? O que precisa estar pronto antes? Dá pra fazer em 25 min? O primeiro é o que você faz agora.</p>
+    <div id="stepRows">${rows}</div>
+    <button class="pc" style="margin:4px 0 8px" onclick="addStepRow()">+ passo</button>
+    <div class="sheet-actions">
+      <button class="secondary" onclick="closeOverlay()">Cancelar</button>
+      <button class="primary" onclick="saveSteps()">Usar esses passos</button>
+    </div>`;
+}
+function stepEditorRow(val,i){
+  return '<div class="step-edit-row"><span class="sn">'+(i+1)+'</span>'+
+    '<input class="step-edit" value="'+escapeHtml(val)+'" placeholder="passo…">'+
+    '<button class="task-x" onclick="this.parentNode.remove()">✕</button></div>';
+}
+function addStepRow(){
+  const box=document.getElementById('stepRows');
+  const n=box.querySelectorAll('.step-edit-row').length;
+  box.insertAdjacentHTML('beforeend', stepEditorRow('', n));
+}
+function saveSteps(){
+  const t=state.tasks.find(x=>x.id===breakTaskId); if(!t){closeOverlay();return;}
+  const vals=[...document.querySelectorAll('#stepRows .step-edit')].map(i=>i.value.trim()).filter(Boolean);
+  t.sub=vals.map(v=>({text:v,done:false}));
+  if(state.pinnedId!==t.id){ state.pinnedId=t.id; }
+  closeOverlay(); commit();
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(vals.length) toast('Pronto — comece pelo passo 1');
+}
+function clearSubs(id){const t=state.tasks.find(x=>x.id===id); if(t){t.sub=[]; expandedId=null; commit();}}
+
+/* ---------- overlay helpers ---------- */
+const overlay=document.getElementById('overlay');
+const sheet=document.getElementById('sheet');
+function closeOverlay(){overlay.classList.remove('open'); stopTimer(); sheet.innerHTML='';}
+overlay.addEventListener('click',e=>{if(e.target===overlay && !timer.running)closeOverlay();});
+
+/* ---------- pre-focus ritual ---------- */
+let ritual={move:false,items:[false,false,false]};
+function openRitual(){
+  ritual={move:state.exercise.includes(todayISO()),items:[false,false,false]};
+  const t=nextTask();
+  sheet.innerHTML=`
+    <h2>Antes de começar</h2>
+    <p class="lead">30 segundos pra montar o ambiente. É isso que separa foco de dispersão.</p>
+    <div id="ritList">
+      <div class="ritual-item ${ritual.move?'on':''}" onclick="tglMove(this)">
+        <div class="rc">✓</div>
+        <div><div class="rtxt">Já me mexi hoje</div><div class="rsub">Aeróbico antes de focar melhora a atenção nesta sessão.</div></div>
+      </div>
+      <div class="ritual-item" onclick="tglItem(this,0)">
+        <div class="rc">✓</div>
+        <div><div class="rtxt">Celular longe do alcance</div><div class="rsub">Fora do braço, não só no silencioso.</div></div>
+      </div>
+      <div class="ritual-item" onclick="tglItem(this,1)">
+        <div class="rc">✓</div>
+        <div><div class="rtxt">Só esta tarefa aberta</div><div class="rsub">Feche as outras abas e apps.</div></div>
+      </div>
+      <div class="ritual-item" onclick="tglItem(this,2)">
+        <div class="rc">✓</div>
+        <div><div class="rtxt">Companhia de foco (opcional)</div><div class="rsub">Estudar junto de alguém numa call silenciosa aumenta o foco.</div></div>
+      </div>
+    </div>
+    ${ritual.move?'':'<div class="move-nudge">Você ainda não treinou hoje. <b>20–30 min de aeróbico</b> antes daria um ganho real de foco — mas não deixe isso virar desculpa pra não começar.</div>'}
+    <div class="sheet-actions">
+      <button class="secondary" onclick="closeOverlay()">Agora não</button>
+      <button class="primary" onclick="startTimer()">Iniciar ${state.focusMin} min</button>
+    </div>`;
+  overlay.classList.add('open');
+}
+function tglMove(el){ritual.move=!ritual.move; el.classList.toggle('on',ritual.move); if(ritual.move && !state.exercise.includes(todayISO())){logExercise();}}
+function tglItem(el,i){ritual.items[i]=!ritual.items[i]; el.classList.toggle('on',ritual.items[i]);}
+
+/* ---------- timer ---------- */
+let timer={running:false,int:null,left:0};
+let capturedThisBlock=0;
+const lengths=[15,25,45];
+function startTimer(){
+  const t=nextTask();
+  timer.left=state.focusMin*60;
+  capturedThisBlock=0;
+  renderTimer(t);
+  runTimer();
+}
+function renderTimer(t){
+  const C=653.45, total=state.focusMin*60;
+  const frac=Math.max(0,Math.min(1,timer.left/total));
+  sheet.innerHTML=`
+    <div class="timer-task">Foco em <b>${t?escapeHtml(currentMicro(t)):'—'}</b></div>
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 230 230" aria-hidden="true">
+        <circle class="ring-bg" cx="115" cy="115" r="104"></circle>
+        <circle class="ring-fg" id="ringFg" cx="115" cy="115" r="104" stroke-dasharray="${C}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}"></circle>
+      </svg>
+      <div class="clock" id="clock">${clockStr(timer.left)}</div>
+    </div>
+    <div class="meter" id="meter">${meterHTML()}</div>
+    <div class="len-pick" id="lenPick">
+      ${lengths.map(l=>`<button class="${l===state.focusMin?'on':''}" onclick="pickLen(${l})">${l}m</button>`).join('')}
+    </div>
+    <div class="sheet-actions">
+      <button class="secondary" id="pauseBtn" onclick="togglePause()">Pausar</button>
+      <button class="primary" onclick="finishTimer(true)">Concluir</button>
+    </div>
+    <button class="stuck-btn" onclick="openStuck()">Travei — preciso de um passo menor</button>
+    <div class="distr">
+      <button class="distr-toggle" id="distrToggle" onclick="toggleDistr(true)">Anotar um pensamento e continuar</button>
+      <div class="distr-box" id="distrBox">
+        <input id="distrInput" placeholder="o que invadiu sua cabeça…" onkeydown="if(event.key==='Enter')captureDistraction()">
+        <button class="pc" onclick="captureDistraction()">Salvar</button>
+      </div>
+    </div>`;
+}
+function meterHTML(){
+  const done=Math.min(focusToday(),14);
+  let c=''; for(let i=0;i<done;i++)c+='<span class="cell on"></span>';
+  return c+'<span class="cell live"></span>';
+}
+function currentMicro(t){
+  const sub=(t.sub||[]).find(s=>!s.done);
+  return sub? sub.text : (t.step||t.text);
+}
+function toggleDistr(show){
+  const box=document.getElementById('distrBox'), tog=document.getElementById('distrToggle');
+  if(!box)return;
+  box.classList.toggle('open',show); if(tog)tog.style.display=show?'none':'block';
+  if(show){const i=document.getElementById('distrInput'); if(i)i.focus();}
+}
+function captureDistraction(){
+  const i=document.getElementById('distrInput'); if(!i)return;
+  const v=i.value.trim(); if(!v){toggleDistr(false);return;}
+  const id=Date.now();
+  state.tasks.unshift({id,text:v,step:'',done:false,prazo:null,deferred:false,sub:[]});
+  capturedThisBlock++;
+  commit();
+  i.value=''; toggleDistr(false);
+  toast('Estacionado na sua lista — volte ao foco');
+}
+function pickLen(l){ if(timer.running) return; state.focusMin=l; timer.left=l*60; commit(); const t=nextTask(); renderTimer(t); }
+function runTimer(){
+  timer.running=true;
+  clearInterval(timer.int);
+  const total=state.focusMin*60, C=653.45;
+  timer.int=setInterval(()=>{
+    timer.left--;
+    const c=document.getElementById('clock');
+    if(c){c.textContent=clockStr(timer.left); c.classList.toggle('warn',timer.left<=60);}
+    const r=document.getElementById('ringFg');
+    if(r){const frac=Math.max(0,timer.left/total); r.style.strokeDashoffset=(C*(1-frac)).toFixed(1);}
+    if(timer.left<=0){finishTimer(false);}
+  },1000);
+  const pb=document.getElementById('pauseBtn'); if(pb)pb.textContent='Pausar';
+}
+function togglePause(){
+  if(timer.running){clearInterval(timer.int); timer.running=false; const pb=document.getElementById('pauseBtn'); if(pb)pb.textContent='Retomar';}
+  else{runTimer();}
+}
+function stopTimer(){clearInterval(timer.int); timer.running=false;}
+function clockStr(s){s=Math.max(0,s); const m=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return m+':'+ss;}
+function finishTimer(manual){
+  stopTimer();
+  state.focus.push({d:todayISO(), m:state.focusMin});
+  commit();
+  const n=focusToday();
+  const cap = capturedThisBlock>0
+    ? `<p class="lead" style="margin-top:8px">💭 Você estacionou ${capturedThisBlock} pensamento${capturedThisBlock>1?'s':''} durante o bloco — ${capturedThisBlock>1?'estão':'está'} na sua lista, sem se perder.</p>` : '';
+  sheet.innerHTML=`
+    <div class="done-burst">
+      <div class="big">✅</div>
+      <h2>Bloco concluído</h2>
+      <p class="lead">${n}º bloco de foco hoje. Isso é momentum — e momentum move mais que motivação.</p>
+      ${cap}
+    </div>
+    <div class="sheet-actions">
+      <button class="secondary" onclick="closeOverlay()">Pausar de vez</button>
+      <button class="primary" onclick="openRitual()">Mais um bloco</button>
+    </div>`;
+}
+
+/* ---------- travei / regulação emocional (TCC) ---------- */
+let stuckState='';
+function openStuck(){
+  stuckState='';
+  sheet.innerHTML=`
+    <h2>Ok, travou. Sem drama.</h2>
+    <p class="lead">Nomear o que está rolando já baixa a intensidade. Depois a gente encolhe o passo.</p>
+    <div class="chips" id="chips">
+      ${['Frustração','Tédio','Ansiedade','Sobrecarga','Sem sentido'].map(c=>`<button class="chip" onclick="pickChip(this,'${c}')">${c}</button>`).join('')}
+    </div>
+    <span class="micro-label">Qual o MENOR passo possível agora?</span>
+    <p class="micro-hint">Tão pequeno que seja quase ridículo. "Abrir o documento." "Escrever uma frase." "Mandar uma mensagem."</p>
+    <textarea id="microStep" placeholder="o menor passo…"></textarea>
+    <div class="sheet-actions">
+      <button class="secondary" onclick="closeOverlay()">Fechar</button>
+      <button class="primary" onclick="applyMicro()">Voltar com esse passo</button>
+    </div>`;
+  overlay.classList.add('open');
+}
+function pickChip(el,c){
+  document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on'); stuckState=c;
+}
+function applyMicro(){
+  const v=document.getElementById('microStep').value.trim();
+  const t=nextTask();
+  if(v && t){ t.step=v; commit(); }
+  else if(v && !t){
+    const id=Date.now(); state.tasks.unshift({id,text:v,step:v,done:false,prazo:null,deferred:false,sub:[]}); state.pinnedId=id; commit();
+  }
+  closeOverlay();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- utils ---------- */
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function commit(){render(); saveState();}
+function hardReset(){
+  if(!confirm('Zerar todas as tarefas e registros? Isso não volta.'))return;
+  state={tasks:[],pinnedId:null,exercise:[],sleep:[],focus:[],focusMin:25,start:todayISO()};
+  expandedId=null; openSections={depois:false,done:false};
+  commit();
+}
+
+/* ---------- install hint (iOS Safari) ---------- */
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+}
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+function dismissInstall(){
+  document.getElementById('install').classList.remove('show');
+  try{ localStorage.setItem('impulso:installDismissed','1'); }catch(e){}
+}
+function maybeShowInstall(){
+  if(isStandalone()) return;
+  let dismissed=false;
+  try{ dismissed=localStorage.getItem('impulso:installDismissed')==='1'; }catch(e){}
+  if(dismissed) return;
+  if(isIOS()){
+    setTimeout(()=>document.getElementById('install').classList.add('show'),1400);
+  }
+}
+
+/* ---------- boot ---------- */
+(function init(){
+  const saved=loadState();
+  if(saved) state=Object.assign(state,saved);
+  if(!Array.isArray(state.focus)) state.focus=[];
+  state.tasks.forEach(t=>{ if(t.prazo===undefined)t.prazo=null; if(t.deferred===undefined)t.deferred=false; if(!Array.isArray(t.sub))t.sub=[]; });
+  if(state.pinnedId==null && state.nextId!=null) state.pinnedId=state.nextId;
+  delete state.nextId; delete state.aiConsent;
+  if(!state.start) state.start=todayISO();
+  render();
+  saveState();
+  maybeShowInstall();
+})();
+
+/* ---------- service worker ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
