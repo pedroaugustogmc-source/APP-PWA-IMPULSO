@@ -112,9 +112,6 @@
   .hero-chip.pin{background:var(--signal-soft);color:var(--signal);border-color:transparent}
   .action{font-family:"Bricolage Grotesque";font-weight:700;font-size:clamp(23px,5.6vw,33px);line-height:1.1;color:var(--ink);margin-bottom:14px;word-break:break-word}
   .action.empty{color:var(--muted);font-weight:600;font-size:19px;margin-bottom:10px}
-  .hero-step-input{width:100%;border:1px dashed var(--line);background:var(--panel-2);border-radius:10px;padding:12px 12px;font-family:inherit;font-size:16px;color:var(--ink);margin-bottom:12px}
-  .hero-step-input::placeholder{color:var(--faint)}
-  .hero-step-input:focus{outline:none;border-style:solid;border-color:var(--signal-line);background:var(--bg-2)}
   .hero-sub{display:none;align-items:flex-start;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:12px}
   .sub-check{flex-shrink:0;width:34px;height:34px;border-radius:50%;border:2px solid var(--signal);background:transparent;color:var(--signal);cursor:pointer;font-size:15px;line-height:1;transition:.15s;display:grid;place-items:center}
   .sub-check:active{background:var(--signal);color:#1a1205;transform:scale(.94)}
@@ -306,10 +303,10 @@
   .tabbtn.on.prog{border-color:var(--teal);color:var(--teal);box-shadow:0 0 16px var(--teal-soft)}
 
   /* ---------- sistema de movimento (premium) ---------- */
-  .overlay.open{animation:fadeIn .26s ease}
+  .overlay.open{animation:fadeIn .16s ease}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  .overlay.open .sheet{animation:sheetIn .38s cubic-bezier(.34,1.28,.5,1)}
-  @keyframes sheetIn{from{opacity:0;transform:translateY(26px) scale(.965)}to{opacity:1;transform:none}}
+  .overlay.open .sheet{animation:sheetIn .24s cubic-bezier(.32,1.25,.5,1)}
+  @keyframes sheetIn{from{opacity:0;transform:translateY(20px) scale(.975)}to{opacity:1;transform:none}}
   .done-burst .big{animation:pop .55s cubic-bezier(.34,1.5,.55,1)}
   @keyframes pop{0%{transform:scale(.35);opacity:0}55%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
   .done-burst h2{animation:riseIn .45s ease .06s both}
@@ -349,7 +346,6 @@
     </div>
     <div class="action" id="heroAction">Carregando…</div>
     <div id="heroStepZone">
-      <input class="hero-step-input" id="heroStepInput" placeholder="menor passo possível…" onchange="setHeroStep(this.value)">
       <div class="hero-sub" id="heroSub"></div>
       <button class="break-btn" id="breakBtn" onclick="openBreakdown(currentNextId())">✂ Não sei por onde começar — quebrar em passos</button>
     </div>
@@ -546,7 +542,6 @@ function renderHero(){
   const a=document.getElementById('heroAction');
   const chip=document.getElementById('heroChip');
   const stepZone=document.getElementById('heroStepZone');
-  const stepInput=document.getElementById('heroStepInput');
   const subEl=document.getElementById('heroSub');
   const breakBtn=document.getElementById('breakBtn');
   const dueLine=document.getElementById('dueLine');
@@ -582,7 +577,6 @@ function renderHero(){
   const sub=t.sub||[];
   const idx=sub.findIndex(s=>!s.done);
   if(sub.length && idx>=0){
-    stepInput.style.display='none';
     breakBtn.style.display='none';
     subEl.style.display='flex';
     subEl.innerHTML=
@@ -591,14 +585,11 @@ function renderHero(){
       '<div class="sub-prog">passo '+(idx+1)+' de '+sub.length+' · <button class="sub-edit" onclick="openBreakdown('+t.id+')">editar</button></div></div>';
   } else {
     subEl.style.display='none';
-    stepInput.style.display='block';
-    stepInput.value=t.step||'';
     breakBtn.style.display='block';
     breakBtn.textContent = sub.length ? '✂ Refazer os passos' : '✂ Não sei por onde começar — quebrar em passos';
   }
 }
 function currentNextId(){const t=nextTask();return t?t.id:null;}
-function setHeroStep(v){const t=nextTask(); if(t){t.step=v.trim(); commit();}}
 function completeSub(id){
   const t=state.tasks.find(x=>x.id===id); if(!t||!t.sub)return;
   const i=t.sub.findIndex(s=>!s.done); if(i>=0)t.sub[i].done=true;
