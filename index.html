@@ -59,8 +59,8 @@
     --sal:env(safe-area-inset-left);
     --sar:env(safe-area-inset-right);
   }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html{-webkit-text-size-adjust:100%;background:var(--bg-2)}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;max-width:100%}
+  html{-webkit-text-size-adjust:100%;background:var(--bg-2);overflow-x:hidden;width:100%}
   body{
     font-family:"Instrument Sans",system-ui,sans-serif;
     background:var(--bg);
@@ -71,12 +71,15 @@
     padding:calc(var(--sat) + 18px) calc(var(--sar) + 16px) calc(var(--sab) + 104px) calc(var(--sal) + 16px);
     min-height:100vh;
     min-height:100dvh;
+    width:100%;
+    overflow-x:hidden;
     -webkit-font-smoothing:antialiased;
     -webkit-touch-callout:none;
     -webkit-user-select:none;
     user-select:none;
     touch-action:manipulation;
     overscroll-behavior-y:none;
+    overscroll-behavior-x:none;
   }
   input,textarea{-webkit-user-select:text;user-select:text}
   button{touch-action:manipulation}
