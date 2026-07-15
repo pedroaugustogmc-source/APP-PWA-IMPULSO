@@ -187,7 +187,6 @@
   .acc-head{width:100%;text-align:left;background:none;border:none;color:var(--muted);font-family:"JetBrains Mono";font-size:11px;font-weight:600;cursor:pointer;padding:10px 2px;letter-spacing:.06em;text-transform:uppercase}
   .acc-head:active{color:var(--ink)}
   .tasks.sub{margin-top:8px}
-  .empty-note{font-size:13px;color:var(--faint);text-align:center;padding:14px 4px;font-style:italic}
 
   /* trackers */
   .track-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
@@ -319,9 +318,8 @@
   @keyframes ringGlow{0%,100%{filter:drop-shadow(0 0 5px var(--signal-line))}50%{filter:drop-shadow(0 0 15px var(--signal-line))}}
   .clock{transition:color .3s ease}
   .today .greet{color:var(--signal-2);font-weight:700}
-  .empty-motif{display:flex;align-items:center;gap:12px;margin:2px 0 12px}
-  .empty-motif svg{width:30px;height:30px;flex-shrink:0;opacity:.9;filter:drop-shadow(0 0 8px var(--signal-line))}
-  .empty-motif span{font-family:"Bricolage Grotesque";font-weight:600;font-size:19px;color:var(--muted);line-height:1.2}
+  .empty-motif{margin:2px 0 12px}
+  .empty-motif svg{width:32px;height:32px;opacity:.9;filter:drop-shadow(0 0 8px var(--signal-line))}
 
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -362,7 +360,6 @@
   <!-- TAREFAS -->
   <section class="card" style="margin-bottom:16px">
     <h2>Tira da cabeça</h2>
-    <div class="sub">Jogue tudo aqui. O que não está no sistema, não existe — e não pesa na sua cabeça.</div>
     <div class="capture">
       <input id="capInput" placeholder="Ex: mandar orçamento pra barbearia do João" onkeydown="if(event.key==='Enter')addTask()">
       <button onclick="addTask()">+</button>
@@ -559,8 +556,7 @@ function renderHero(){
   if(!t){
     a.classList.add('empty');
     a.innerHTML='<div class="empty-motif">'+
-      '<svg viewBox="0 0 48 48" fill="none" stroke="#F0A63C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 42V10M12 22l12-12 12 12"/></svg>'+
-      '<span>Cabeça limpa.<br>Jogue a primeira coisa aqui embaixo ↓</span></div>';
+      '<svg viewBox="0 0 48 48" fill="none" stroke="#F0A63C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 42V10M12 22l12-12 12 12"/></svg></div>';
     if(eyebrow) eyebrow.textContent='Comece por aqui';
     chip.className='hero-chip'; chip.textContent='';
     stepZone.style.display='none';
@@ -615,7 +611,7 @@ function renderPills(){
 function renderTasks(){
   const list=document.getElementById('taskList');
   if(state.tasks.length===0){
-    list.innerHTML='<div class="empty-note">Vazio é bom. Quando algo aparecer na cabeça, joga aqui — depois você marca o prazo.</div>';
+    list.innerHTML='';
     return;
   }
   const nx=nextTask();
