@@ -1,8 +1,7 @@
-/* Impulso — service worker (offline app shell) */
-const CACHE = 'impulso-v2';
+/* Impulso — service worker (abertura instantânea: stale-while-revalidate) */
+const CACHE = 'impulso-v3';
 const ASSETS = [
-  './',
-  './index.html',
+  '/',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -12,7 +11,9 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE).then((c) => c.addAll(ASSETS).catch(() => {})).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -27,28 +28,32 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  const isFont = url.host.includes('fonts.googleapis.com') || url.host.includes('fonts.gstatic.com');
 
-  // Navegações (abrir o app): rede primeiro, cai pro cache offline.
+  // Navegação (abrir o app): serve o shell do cache NA HORA e revalida em segundo plano.
   if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req).catch(() => caches.match('./index.html'))
-    );
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      const cached = await cache.match('/', { ignoreSearch: true });
+      const network = fetch(req).then((res) => {
+        if (res && res.status === 200) cache.put('/', res.clone());
+        return res;
+      }).catch(() => cached);
+      return cached || network;   // cache primeiro; rede só se não houver cache
+    })());
     return;
   }
 
-  // Fontes do Google: cache-first, com atualização em segundo plano.
-  const isFont = url.host.includes('fonts.googleapis.com') || url.host.includes('fonts.gstatic.com');
-
-  e.respondWith(
-    caches.match(req).then((hit) => {
-      const fetchPromise = fetch(req).then((res) => {
-        if (res && res.status === 200 && (url.origin === self.location.origin || isFont)) {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
-        }
+  // Assets same-origin e fontes: cache-first com atualização em segundo plano.
+  if (url.origin === self.location.origin || isFont) {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      const cached = await cache.match(req);
+      const network = fetch(req).then((res) => {
+        if (res && res.status === 200) cache.put(req, res.clone());
         return res;
-      }).catch(() => hit);
-      return hit || fetchPromise;
-    })
-  );
+      }).catch(() => cached);
+      return cached || network;
+    })());
+  }
 });
