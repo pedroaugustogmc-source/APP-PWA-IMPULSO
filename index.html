@@ -201,9 +201,9 @@
   .goal-line{font-size:11px;color:var(--faint);margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);line-height:1.45}
 
   /* overlay / sheet */
-  .overlay{position:fixed;inset:0;background:rgba(8,10,12,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:calc(var(--sat) + 14px) calc(var(--sar) + 16px) calc(var(--sab) + 14px) calc(var(--sal) + 16px);z-index:50}
+  .overlay{position:fixed;inset:0;background:rgba(8,10,12,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:calc(var(--sat) + 14px) calc(var(--sar) + 16px) calc(var(--sab) + 14px) calc(var(--sal) + 16px);z-index:85}
   .overlay.open{display:flex}
-  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:460px;width:100%;padding:26px 22px;box-shadow:0 24px 70px rgba(0,0,0,.55);max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:460px;width:100%;padding:26px 22px;box-shadow:0 24px 70px rgba(0,0,0,.55);max-height:92vh;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
   .sheet h2{font-family:"Bricolage Grotesque";font-size:21px;font-weight:700;margin-bottom:4px;color:var(--ink)}
   .sheet .lead{font-size:13.5px;color:var(--muted);margin-bottom:20px;line-height:1.5}
   .ritual-item{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
@@ -272,11 +272,11 @@
   .step-edit:focus{outline:none;border-color:var(--signal-line);background:var(--bg-2)}
 
   /* toast */
-  .toast{position:fixed;left:50%;bottom:calc(var(--sab) + 96px);transform:translate(-50%,20px);background:var(--panel-3);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:500;padding:11px 18px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
+  .toast{position:fixed;left:50%;bottom:calc(var(--sab) + 96px);transform:translate(-50%,20px);background:var(--panel-3);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:500;padding:11px 18px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:95;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translate(-50%,0)}
 
   /* install hint (iOS) */
-  .install{position:fixed;left:calc(var(--sal) + 12px);right:calc(var(--sar) + 12px);bottom:calc(var(--sab) + 88px);background:var(--panel);border:1px solid var(--signal-line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);padding:14px 14px 14px 16px;display:none;align-items:center;gap:12px;z-index:70;max-width:460px;margin:0 auto}
+  .install{position:fixed;left:calc(var(--sal) + 12px);right:calc(var(--sar) + 12px);bottom:calc(var(--sab) + 88px);background:var(--panel);border:1px solid var(--signal-line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);padding:14px 14px 14px 16px;display:none;align-items:center;gap:12px;z-index:65;max-width:460px;margin:0 auto}
   .install.show{display:flex;animation:slideup .35s ease}
   @keyframes slideup{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
   .install .ii{width:40px;height:40px;border-radius:10px;flex-shrink:0}
@@ -579,12 +579,21 @@ function renderHero(){
       '<div class="sub-body"><div class="sub-text">'+escapeHtml(sub[idx].text)+'</div>'+
       '<div class="sub-prog">passo '+(idx+1)+' de '+sub.length+' · <button class="sub-edit" onclick="openBreakdown('+t.id+')">editar</button></div></div>';
   } else {
-    subEl.style.display='none';
     breakBtn.style.display='block';
     breakBtn.textContent = sub.length ? '✂ Refazer os passos' : '✂ Não sei por onde começar — quebrar em passos';
+    if(t.step && t.step!==t.text){
+      subEl.style.display='flex';
+      subEl.innerHTML=
+        '<button class="sub-check" onclick="clearStep('+t.id+')" title="limpar menor passo">×</button>'+
+        '<div class="sub-body"><div class="sub-text">'+escapeHtml(t.step)+'</div>'+
+        '<div class="sub-prog">seu menor passo agora</div></div>';
+    } else {
+      subEl.style.display='none';
+    }
   }
 }
 function currentNextId(){const t=nextTask();return t?t.id:null;}
+function clearStep(id){const t=state.tasks.find(x=>x.id===id); if(t){t.step=''; commit();}}
 function completeSub(id){
   const t=state.tasks.find(x=>x.id===id); if(!t||!t.sub)return;
   const i=t.sub.findIndex(s=>!s.done); if(i>=0)t.sub[i].done=true;
@@ -748,7 +757,7 @@ function openBreakdown(id){
   breakTaskId=id;
   const t=state.tasks.find(x=>x.id===id); if(!t)return;
   renderStepEditor(t.sub && t.sub.length ? t.sub.map(s=>s.text) : []);
-  overlay.classList.add('open');
+  showOverlay();
 }
 function renderStepEditor(steps){
   const rows=(steps.length?steps:['','','']).map((s,i)=>stepEditorRow(s,i)).join('');
@@ -786,7 +795,8 @@ function clearSubs(id){const t=state.tasks.find(x=>x.id===id); if(t){t.sub=[]; e
 /* ---------- overlay helpers ---------- */
 const overlay=document.getElementById('overlay');
 const sheet=document.getElementById('sheet');
-function closeOverlay(){overlay.classList.remove('open'); stopTimer(); sheet.innerHTML='';}
+function showOverlay(){overlay.classList.add('open'); document.body.style.overflow='hidden';}
+function closeOverlay(){overlay.classList.remove('open'); document.body.style.overflow=''; stopTimer(); sheet.innerHTML='';}
 overlay.addEventListener('click',e=>{if(e.target===overlay && !timer.running)closeOverlay();});
 
 /* ---------- pre-focus ritual ---------- */
@@ -820,13 +830,13 @@ function openRitual(){
       <button class="secondary" onclick="closeOverlay()">Agora não</button>
       <button class="primary" onclick="startTimer()">Iniciar ${state.focusMin} min</button>
     </div>`;
-  overlay.classList.add('open');
+  showOverlay();
 }
 function tglMove(el){ritual.move=!ritual.move; el.classList.toggle('on',ritual.move); if(ritual.move && !state.exercise.includes(todayISO())){logExercise();}}
 function tglItem(el,i){ritual.items[i]=!ritual.items[i]; el.classList.toggle('on',ritual.items[i]);}
 
 /* ---------- timer ---------- */
-let timer={running:false,int:null,left:0};
+let timer={running:false,int:null,left:0,endAt:0};
 let capturedThisBlock=0;
 const lengths=[15,25,45];
 function startTimer(){
@@ -893,19 +903,23 @@ function captureDistraction(){
 function pickLen(l){ if(timer.running) return; state.focusMin=l; timer.left=l*60; commit(); const t=nextTask(); renderTimer(t); }
 function runTimer(){
   timer.running=true;
+  timer.endAt=Date.now()+timer.left*1000;
   acquireWake();
   const rw=document.querySelector('.ring-wrap'); if(rw)rw.classList.add('running');
   clearInterval(timer.int);
-  const total=state.focusMin*60, C=653.45;
-  timer.int=setInterval(()=>{
-    timer.left--;
-    const c=document.getElementById('clock');
-    if(c){c.textContent=clockStr(timer.left); c.classList.toggle('warn',timer.left<=60);}
-    const r=document.getElementById('ringFg');
-    if(r){const frac=Math.max(0,timer.left/total); r.style.strokeDashoffset=(C*(1-frac)).toFixed(1);}
-    if(timer.left<=0){finishTimer(false);}
-  },1000);
+  timer.int=setInterval(tickTimer,1000);
   const pb=document.getElementById('pauseBtn'); if(pb)pb.textContent='Pausar';
+}
+function tickTimer(){
+  // baseado no relógio de parede (endAt), não em contagem por tick — não desincroniza
+  // quando o app fica em segundo plano e o navegador atrasa/pausa o setInterval.
+  const total=state.focusMin*60, C=653.45;
+  timer.left=Math.max(0,Math.round((timer.endAt-Date.now())/1000));
+  const c=document.getElementById('clock');
+  if(c){c.textContent=clockStr(timer.left); c.classList.toggle('warn',timer.left<=60);}
+  const r=document.getElementById('ringFg');
+  if(r){const frac=Math.max(0,timer.left/total); r.style.strokeDashoffset=(C*(1-frac)).toFixed(1);}
+  if(timer.left<=0){finishTimer(false);}
 }
 function togglePause(){
   if(timer.running){
@@ -926,7 +940,7 @@ function releaseWake(){
   try{ if(wakeLock){ wakeLock.release(); wakeLock=null; } }catch(e){}
 }
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible' && timer.running){ acquireWake(); }
+  if(document.visibilityState==='visible' && timer.running){ acquireWake(); tickTimer(); }
 });
 function clockStr(s){s=Math.max(0,s); const m=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return m+':'+ss;}
 function finishTimer(manual){
@@ -966,7 +980,7 @@ function openStuck(){
       <button class="secondary" onclick="closeOverlay()">Fechar</button>
       <button class="primary" onclick="applyMicro()">Voltar com esse passo</button>
     </div>`;
-  overlay.classList.add('open');
+  showOverlay();
 }
 function pickChip(el,c){
   document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('on'));
