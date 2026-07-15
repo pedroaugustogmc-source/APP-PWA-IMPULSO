@@ -68,7 +68,7 @@
     background-attachment:fixed;
     color:var(--ink);
     line-height:1.5;
-    padding:calc(var(--sat) + 18px) calc(var(--sar) + 16px) calc(var(--sab) + 84px) calc(var(--sal) + 16px);
+    padding:calc(var(--sat) + 18px) calc(var(--sar) + 16px) calc(var(--sab) + 104px) calc(var(--sal) + 16px);
     min-height:100vh;
     min-height:100dvh;
     -webkit-font-smoothing:antialiased;
@@ -273,11 +273,11 @@
   .step-edit:focus{outline:none;border-color:var(--signal-line);background:var(--bg-2)}
 
   /* toast */
-  .toast{position:fixed;left:50%;bottom:calc(var(--sab) + 26px);transform:translate(-50%,20px);background:var(--panel-3);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:500;padding:11px 18px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
+  .toast{position:fixed;left:50%;bottom:calc(var(--sab) + 96px);transform:translate(-50%,20px);background:var(--panel-3);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:500;padding:11px 18px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translate(-50%,0)}
 
   /* install hint (iOS) */
-  .install{position:fixed;left:calc(var(--sal) + 12px);right:calc(var(--sar) + 12px);bottom:calc(var(--sab) + 12px);background:var(--panel);border:1px solid var(--signal-line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);padding:14px 14px 14px 16px;display:none;align-items:center;gap:12px;z-index:70;max-width:460px;margin:0 auto}
+  .install{position:fixed;left:calc(var(--sal) + 12px);right:calc(var(--sar) + 12px);bottom:calc(var(--sab) + 88px);background:var(--panel);border:1px solid var(--signal-line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);padding:14px 14px 14px 16px;display:none;align-items:center;gap:12px;z-index:70;max-width:460px;margin:0 auto}
   .install.show{display:flex;animation:slideup .35s ease}
   @keyframes slideup{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
   .install .ii{width:40px;height:40px;border-radius:10px;flex-shrink:0}
@@ -291,6 +291,19 @@
   footer{text-align:center;font-size:11px;color:var(--faint);margin-top:30px;line-height:1.7}
   a.reset,.reset{color:var(--faint);text-decoration:underline;cursor:pointer;background:none;border:none;font:inherit}
   .reset:active{color:var(--danger)}
+
+  /* ---------- abas (bottom nav) ---------- */
+  .tab-panel[hidden]{display:none}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:8px;justify-content:center;
+    padding:8px calc(var(--sal) + 14px) calc(var(--sab) + 10px) calc(var(--sar) + 14px);
+    background:linear-gradient(to top, var(--bg-2) 62%, rgba(14,16,18,0));backdrop-filter:blur(2px)}
+  .tabbtn{flex:1;max-width:220px;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:14px;color:var(--muted);
+    font-family:"Bricolage Grotesque",sans-serif;font-size:14px;font-weight:700;padding:11px 12px;cursor:pointer;min-height:52px;transition:.15s}
+  .tabbtn .ic{font-size:17px;line-height:1}
+  .tabbtn:active{transform:scale(.97)}
+  .tabbtn.on{background:var(--panel-3);border-color:var(--signal-line);color:var(--signal);box-shadow:0 0 16px rgba(240,166,60,.14)}
+  .tabbtn.on.prog{border-color:var(--teal);color:var(--teal);box-shadow:0 0 16px var(--teal-soft)}
 
   /* ---------- sistema de movimento (premium) ---------- */
   .overlay.open{animation:fadeIn .26s ease}
@@ -327,6 +340,7 @@
     </div>
   </header>
 
+  <main id="tabAgora" class="tab-panel">
   <!-- HERO: o próximo passo -->
   <section class="hero">
     <div class="hero-head">
@@ -356,12 +370,14 @@
     </div>
     <ul class="tasks" id="taskList"></ul>
   </section>
+  </main>
 
+  <main id="tabProgresso" class="tab-panel" hidden>
   <div class="trackers">
     <!-- FOCO -->
     <section class="card">
       <h2>Foco</h2>
-      <div class="sub">O único tracker que você não preenche — você conquista. Cada bloco concluído entra aqui.</div>
+      <div class="sub">Você não preenche — conquista. Cada bloco de foco entra aqui.</div>
       <div class="track-row">
         <div class="track-num" id="fcToday">0<small> blocos hoje</small></div>
       </div>
@@ -372,7 +388,7 @@
     <!-- CORPO -->
     <section class="card">
       <h2>Corpo</h2>
-      <div class="sub">Aeróbico melhora foco na hora e, mantido, melhora a atenção de base.</div>
+      <div class="sub">Aeróbico melhora o foco na hora e a atenção de base.</div>
       <div class="track-row">
         <div class="track-num" id="exWeek">0<small>/5 esta semana</small></div>
         <button class="btn-log" id="exBtn" onclick="logExercise()">Registrar treino</button>
@@ -384,7 +400,7 @@
     <!-- SONO -->
     <section class="card">
       <h2>Sono</h2>
-      <div class="sub">Sono ruim amplifica todos os sintomas. Constância vale mais que quantidade.</div>
+      <div class="sub">Constância vale mais que quantidade.</div>
       <div class="track-row">
         <div class="track-num" id="slStreak">0<small> dias seguidos</small></div>
         <button class="btn-log" id="slBtn" onclick="logSleep()">Dormi no horário</button>
@@ -395,11 +411,16 @@
   </div>
 
   <footer>
-    Baseado em revisões sistemáticas e meta-análises (2024–2025): TCC, exercício aeróbico, ambiente e sono.<br>
-    Triagem ≠ diagnóstico. Se os sintomas pesarem no dia a dia, busque avaliação profissional.<br>
+    Se os sintomas pesarem no dia a dia, busque avaliação profissional.<br>
     <button class="reset" onclick="hardReset()">zerar tudo</button>
   </footer>
+  </main>
 </div>
+
+<nav class="tabbar">
+  <button class="tabbtn on" data-tab="Agora" onclick="switchTab('Agora')"><span class="ic">⚡</span> Agora</button>
+  <button class="tabbtn prog" data-tab="Progresso" onclick="switchTab('Progresso')"><span class="ic">📈</span> Progresso</button>
+</nav>
 
 <!-- OVERLAY -->
 <div class="overlay" id="overlay">
@@ -984,6 +1005,14 @@ function hardReset(){
   state={tasks:[],pinnedId:null,exercise:[],sleep:[],focus:[],focusMin:25,start:todayISO()};
   expandedId=null; openSections={depois:false,done:false};
   commit();
+}
+
+/* ---------- abas ---------- */
+function switchTab(name){
+  document.getElementById('tabAgora').hidden = name!=='Agora';
+  document.getElementById('tabProgresso').hidden = name!=='Progresso';
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('on', b.dataset.tab===name));
+  window.scrollTo({top:0});
 }
 
 /* ---------- install hint (iOS Safari) ---------- */
