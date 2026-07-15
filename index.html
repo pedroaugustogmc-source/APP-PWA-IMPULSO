@@ -318,8 +318,6 @@
   @keyframes ringGlow{0%,100%{filter:drop-shadow(0 0 5px var(--signal-line))}50%{filter:drop-shadow(0 0 15px var(--signal-line))}}
   .clock{transition:color .3s ease}
   .today .greet{color:var(--signal-2);font-weight:700}
-  .empty-motif{margin:2px 0 12px}
-  .empty-motif svg{width:32px;height:32px;opacity:.9;filter:drop-shadow(0 0 8px var(--signal-line))}
 
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -359,9 +357,8 @@
 
   <!-- TAREFAS -->
   <section class="card" style="margin-bottom:16px">
-    <h2>Tira da cabeça</h2>
     <div class="capture">
-      <input id="capInput" placeholder="Ex: mandar orçamento pra barbearia do João" onkeydown="if(event.key==='Enter')addTask()">
+      <input id="capInput" placeholder="Nova tarefa" onkeydown="if(event.key==='Enter')addTask()">
       <button onclick="addTask()">+</button>
     </div>
     <ul class="tasks" id="taskList"></ul>
@@ -555,8 +552,7 @@ function renderHero(){
   const eyebrow=document.querySelector('.hero .eyebrow');
   if(!t){
     a.classList.add('empty');
-    a.innerHTML='<div class="empty-motif">'+
-      '<svg viewBox="0 0 48 48" fill="none" stroke="#F0A63C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 42V10M12 22l12-12 12 12"/></svg></div>';
+    a.innerHTML='';
     if(eyebrow) eyebrow.textContent='Comece por aqui';
     chip.className='hero-chip'; chip.textContent='';
     stepZone.style.display='none';
