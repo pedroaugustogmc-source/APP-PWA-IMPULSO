@@ -266,9 +266,9 @@
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
   .chip{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:10px 15px;border-radius:999px;font-size:13px;cursor:pointer;font-family:inherit;min-height:42px}
   .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-  .chip-tip{display:none;background:var(--teal-soft);border-radius:12px;padding:12px 14px;margin:-4px 0 18px;font-size:13px;color:#bfe4da;line-height:1.5}
+  .chip-tip{display:none;background:var(--teal-soft);border:1px solid rgba(120,210,190,.16);border-radius:14px;padding:14px 16px;margin:-4px 0 18px;font-size:13.5px;color:#bfe4da;line-height:1.55}
   .chip-tip.show{display:block}
-  .chip-tip b{color:var(--teal)}
+  .chip-tip .eyebrow{display:block;font-family:"JetBrains Mono";font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:var(--teal);margin-bottom:6px}
   .micro-label{font-size:13px;font-weight:600;margin-bottom:8px;display:block;color:var(--ink)}
   .micro-hint{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.45}
   .sheet textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-family:inherit;font-size:16px;resize:vertical;min-height:64px;background:var(--panel-2);color:var(--ink)}
@@ -1082,17 +1082,17 @@ function openStuck(){
   showOverlay();
 }
 const stuckTips={
-  'Frustração':'Ela passa rápido quando é nomeada — o que você acabou de fazer. Respire fundo 3 vezes antes de voltar ao passo.',
-  'Tédio':'É sinal de que o passo está grande ou chato demais pro cérebro agora. Encolha ainda mais, ou troque de tarefa por 10 min e volte.',
-  'Ansiedade':'Ela empurra pra adiar. Faça o oposto: um movimento físico pequeno agora — isso já baixa a tensão.',
-  'Sobrecarga':'É a cabeça tentando segurar tudo de uma vez. Escreva só 1 coisa aqui embaixo — o resto espera 5 minutos.',
-  'Sem sentido':'Também passa. Lembre por que isso importa pra você — ou só dê o próximo passo sem pensar no motivo.'
+  'Frustração':'Nomear o que você sente, em silêncio ou em voz alta, já reduz a intensidade da emoção — é o que a psicologia chama de rotulagem afetiva. Você acabou de fazer isso. Agora volte ao passo.',
+  'Tédio':'Tédio raramente é preguiça: é o cérebro sinalizando que o passo não exige atenção suficiente ou não parece significativo agora. Encolha o passo até ficar quase trivial, ou troque de tarefa por 10 min.',
+  'Ansiedade':'A ansiedade empurra para adiar. Um movimento físico breve — caminhar, alongar, subir uma escada — baixa esse estado em poucos minutos, com efeito visto em dezenas de estudos. Mova o corpo antes de mover a tarefa.',
+  'Sobrecarga':'A mente trava ao tentar segurar várias linhas ao mesmo tempo: é o limite natural da memória de trabalho, não falta de esforço. Escreva só 1 coisa aqui embaixo — o resto espera 5 minutos sem prejuízo real.',
+  'Sem sentido':'Agir de acordo com o que importa pra você reduz o mal-estar mesmo quando a tarefa em si é chata. Lembre, em uma frase, por que isso importa — ou dê o próximo passo sem esperar motivação chegar primeiro.'
 };
 function pickChip(el,c){
   document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('on'));
   el.classList.add('on'); stuckState=c;
   const tip=document.getElementById('chipTip');
-  if(tip && stuckTips[c]){ tip.innerHTML='<b>'+c+':</b> '+stuckTips[c]; tip.classList.add('show'); }
+  if(tip && stuckTips[c]){ tip.innerHTML='<span class="eyebrow">Por que isso acontece</span>'+stuckTips[c]; tip.classList.add('show'); }
 }
 function applyMicro(){
   const v=document.getElementById('microStep').value.trim();
