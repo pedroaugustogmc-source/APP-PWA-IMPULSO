@@ -1,5 +1,5 @@
-/* Impulso — service worker (abertura instantânea: stale-while-revalidate) */
-const CACHE = 'impulso-v3';
+/* Impulso — service worker (network-first: sempre a versão mais nova quando há conexão) */
+const CACHE = 'impulso-v4';
 const ASSETS = [
   '/',
   './manifest.webmanifest',
@@ -30,16 +30,20 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   const isFont = url.host.includes('fonts.googleapis.com') || url.host.includes('fonts.gstatic.com');
 
-  // Navegação (abrir o app): serve o shell do cache NA HORA e revalida em segundo plano.
+  // Navegação (abrir o app): rede primeiro, sempre a versão mais nova publicada.
+  // Cache só entra como reserva se estiver offline — nunca mascara uma atualização.
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       const cache = await caches.open(CACHE);
-      const cached = await cache.match('/', { ignoreSearch: true });
-      const network = fetch(req).then((res) => {
+      try {
+        const res = await fetch(req);
         if (res && res.status === 200) cache.put('/', res.clone());
         return res;
-      }).catch(() => cached);
-      return cached || network;   // cache primeiro; rede só se não houver cache
+      } catch (err) {
+        const cached = await cache.match('/', { ignoreSearch: true });
+        if (cached) return cached;
+        throw err;
+      }
     })());
     return;
   }
