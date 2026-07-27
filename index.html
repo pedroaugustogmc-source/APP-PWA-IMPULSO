@@ -192,6 +192,9 @@
   .acc-head{width:100%;text-align:left;background:none;border:none;color:var(--muted);font-family:"JetBrains Mono";font-size:11px;font-weight:600;cursor:pointer;padding:10px 2px;letter-spacing:.06em;text-transform:uppercase}
   .acc-head:active{color:var(--ink)}
   .tasks.sub{margin-top:8px}
+  .group-label{list-style:none;font-family:"JetBrains Mono";font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 2px 0}
+  .group-label:first-child{padding-top:0}
+  .group-label.pinned{color:var(--signal)}
 
   /* trackers */
   .track-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
@@ -619,10 +622,18 @@ function renderTasks(){
   }
   const nx=nextTask();
   const act=activeTasks().slice().sort(urgencyCmp);
+  const pinned=act.filter(t=>state.pinnedIds.includes(t.id));
+  const rest=act.filter(t=>!state.pinnedIds.includes(t.id));
   const def=state.tasks.filter(t=>t.deferred && !t.done);
   const done=state.tasks.filter(t=>t.done);
 
-  let html = act.map(t=>taskRow(t, !!(nx&&nx.id===t.id), false)).join('');
+  let html='';
+  if(pinned.length){
+    html += '<li class="group-label pinned">★ Fixadas</li>';
+    html += pinned.map(t=>taskRow(t, !!(nx&&nx.id===t.id), false)).join('');
+    if(rest.length) html += '<li class="group-label">Outras</li>';
+  }
+  html += rest.map(t=>taskRow(t, !!(nx&&nx.id===t.id), false)).join('');
   if(def.length) html += accordion('depois','Depois · '+def.length, def.map(t=>taskRow(t,false,true)).join(''));
   if(done.length) html += accordion('done','Concluídas · '+done.length, done.map(t=>taskRow(t,false,false)).join(''));
   list.innerHTML=html;
