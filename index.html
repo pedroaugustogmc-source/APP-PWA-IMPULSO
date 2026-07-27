@@ -614,9 +614,7 @@ function renderPills(){
   const p=document.getElementById('pills');
   const ex=weekDatesDone(state.exercise);
   const sl=streak(state.sleep);
-  const ft=focusToday();
   p.innerHTML=
-    '<span class="pill '+(ft>0?'on':'')+'"><span class="dot"></span>foco <b>'+ft+'</b></span>'+
     '<span class="pill '+(ex>0?'on':'')+'"><span class="dot"></span>mov <b>'+ex+'</b>/5</span>'+
     '<span class="pill '+(sl>0?'on':'')+'"><span class="dot"></span>sono <b>'+sl+'</b>d</span>';
 }
