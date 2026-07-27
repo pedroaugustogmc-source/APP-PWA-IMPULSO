@@ -105,14 +105,13 @@
   .hero{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:24px 22px 22px;margin-bottom:16px;overflow:hidden}
   .hero::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--signal),#c9832a);box-shadow:0 0 16px var(--signal-line)}
   .hero::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
-  .hero-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
-  .eyebrow{font-family:"JetBrains Mono";font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--signal)}
+  .hero-head{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:14px}
   .hero-chip{font-family:"JetBrains Mono";font-size:11px;font-weight:600;padding:4px 9px;border-radius:6px;background:var(--panel-2);color:var(--muted);white-space:nowrap;border:1px solid var(--line-soft)}
   .hero-chip.od{background:var(--danger-soft);color:var(--danger);border-color:transparent}
   .hero-chip.td{background:var(--signal-soft);color:var(--signal);border-color:transparent}
   .hero-chip.tm{background:var(--teal-soft);color:var(--teal);border-color:transparent}
   .hero-chip.fut{background:var(--panel-2);color:var(--muted)}
-  .hero-chip.pin{background:var(--signal-soft);color:var(--signal);border-color:transparent}
+  .hero-chip.pinned{background:var(--signal-soft);color:var(--signal);border-color:transparent}
   .action{font-family:"Bricolage Grotesque";font-weight:700;font-size:clamp(23px,5.6vw,33px);line-height:1.1;color:var(--ink);margin-bottom:14px;word-break:break-word}
   .action.empty{color:var(--muted);font-weight:600;font-size:19px;margin-bottom:10px}
   .hero-sub{display:none;align-items:flex-start;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:12px}
@@ -154,9 +153,15 @@
 
   /* task list */
   .tasks{list-style:none;display:flex;flex-direction:column;gap:9px}
-  .task{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel-2);transition:border-color .15s}
-  .task.isnext{border-color:var(--signal-line);background:linear-gradient(var(--signal-soft),var(--signal-soft)),var(--panel-2)}
-  .task.done{opacity:.5}
+  .task{position:relative;border-radius:12px;overflow:hidden}
+  .task-swipe-bg{position:absolute;inset:0;background:var(--danger);border-radius:12px;display:flex;align-items:center;justify-content:flex-end;padding-right:22px}
+  .task-swipe-bg span{color:#1c0d09;font-weight:700;font-size:13px;white-space:nowrap}
+  .task-swipe-fg{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel-2);transition:border-color .15s;touch-action:pan-y;will-change:transform}
+  .task-swipe-fg.dragging{transition:none}
+  .task-swipe-fg.snap{transition:transform .25s cubic-bezier(.2,.8,.3,1)}
+  .task-swipe-fg.removing{transition:transform .2s ease, opacity .2s ease}
+  .task.isnext .task-swipe-fg{border-color:var(--signal-line);background:linear-gradient(var(--signal-soft),var(--signal-soft)),var(--panel-2)}
+  .task.done .task-swipe-fg{opacity:.5}
   .task-top{display:flex;align-items:flex-start;gap:10px}
   .task-main{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
   .task-title{font-size:14.5px;font-weight:600;word-break:break-word;color:var(--ink)}
@@ -167,8 +172,8 @@
   .chk:active{transform:scale(.9)}
   .task-x{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:6px 8px;flex-shrink:0;min-width:34px;min-height:34px}
   .task-x:active{color:var(--danger)}
-  .pin{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:6px 8px;flex-shrink:0;transition:color .12s;min-width:34px;min-height:34px}
-  .pin:active{color:var(--signal);transform:scale(.9)}
+  .pin,.edit-btn{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:6px 8px;flex-shrink:0;transition:color .12s;min-width:34px;min-height:34px}
+  .pin:active,.edit-btn:active{color:var(--signal);transform:scale(.9)}
   .pin.on{color:var(--signal);text-shadow:0 0 8px var(--signal-line)}
   .prazo-chip{align-self:flex-start;border:none;cursor:pointer;font-family:"JetBrains Mono";font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:6px;background:var(--panel-3);color:var(--muted)}
   .prazo-chip.none{background:transparent;border:1px dashed var(--line);color:var(--faint);font-weight:500}
@@ -340,7 +345,6 @@
   <!-- HERO: o próximo passo -->
   <section class="hero">
     <div class="hero-head">
-      <div class="eyebrow">O próximo passo</div>
       <span class="hero-chip" id="heroChip"></span>
     </div>
     <div class="action" id="heroAction">Carregando…</div>
@@ -446,7 +450,7 @@ function saveState(){
 /* ---------- state ---------- */
 let state={
   tasks:[],          // {id,text,step,done,prazo:null|"YYYY-MM-DD",deferred:false,sub:[]}
-  pinnedId:null,     // override manual do próximo passo (gruda até concluir)
+  pinnedIds:[],      // tarefas fixadas como prioridade (o sistema escolhe a mais urgente entre elas)
   exercise:[],       // ["YYYY-MM-DD"]
   sleep:[],          // ["YYYY-MM-DD"]
   focus:[],          // [{d:"YYYY-MM-DD", m:minutos}] blocos concluídos
@@ -508,12 +512,9 @@ function urgencyCmp(a,b){
 function nextTask(){
   const act=activeTasks();
   if(!act.length) return null;
-  if(state.pinnedId){
-    const p=act.find(t=>t.id===state.pinnedId);
-    if(p) return p;
-    state.pinnedId=null;
-  }
-  return act.slice().sort(urgencyCmp)[0];
+  const pinned=act.filter(t=>state.pinnedIds.includes(t.id));
+  const pool=pinned.length?pinned:act;
+  return pool.slice().sort(urgencyCmp)[0];
 }
 function tomorrowISO(){const d=new Date(); d.setDate(d.getDate()+1); return iso(d);}
 function prazoLabel(p){
@@ -549,24 +550,21 @@ function renderHero(){
   if(dc.hoje>0) parts.push(dc.hoje+' vence'+(dc.hoje>1?'m':'')+' hoje');
   dueLine.innerHTML = parts.length ? '🕒 '+parts.join(' · ') : '';
 
-  const eyebrow=document.querySelector('.hero .eyebrow');
   if(!t){
     a.classList.add('empty');
     a.innerHTML='';
-    if(eyebrow) eyebrow.textContent='Comece por aqui';
     chip.className='hero-chip'; chip.textContent='';
     stepZone.style.display='none';
     btn.disabled=true;
     return;
   }
-  if(eyebrow) eyebrow.textContent='O próximo passo';
   a.classList.remove('empty');
   a.textContent=t.text;
   btn.disabled=false;
   const lb=prazoLabel(t.prazo);
-  const pinned=t.id===state.pinnedId;
+  const pinned=state.pinnedIds.includes(t.id);
   if(lb){ chip.className='hero-chip '+lb.cls; chip.textContent=(pinned?'★ ':'⏳ ')+lb.t; }
-  else { chip.className='hero-chip'+(pinned?' pin':''); chip.textContent=pinned?'★ fixada':'sem prazo'; }
+  else { chip.className='hero-chip'+(pinned?' pinned':''); chip.textContent=pinned?'★ fixada':'sem prazo'; }
 
   stepZone.style.display='block';
   const sub=t.sub||[];
@@ -631,20 +629,23 @@ function renderTasks(){
 }
 function taskRow(t,isNext,isDeferred){
   const lb=prazoLabel(t.prazo);
-  const pinned=t.id===state.pinnedId;
+  const pinned=state.pinnedIds.includes(t.id);
   const chip = t.done ? '' :
     '<button class="prazo-chip '+(lb?lb.cls:'none')+'" onclick="toggleExpand('+t.id+')">'+
       (lb?((pinned?'★ ':'')+lb.t):'＋ prazo')+'</button>';
   const pin = (t.done||isDeferred) ? '' :
-    '<button class="pin'+(pinned?' on':'')+'" title="fixar como próximo passo" onclick="togglePin('+t.id+')">★</button>';
+    '<button class="pin'+(pinned?' on':'')+'" title="fixar como prioridade" onclick="togglePin('+t.id+')">★</button>';
+  const editBtn = '<button class="edit-btn" title="editar tarefa" onclick="openEditTask('+t.id+')">✎</button>';
   const sub=t.sub||[];
   const subBadge = (!t.done && sub.length)
     ? '<span class="sub-badge">✂ '+sub.filter(s=>s.done).length+'/'+sub.length+'</span>' : '';
   let row='<li class="task '+(isNext?'isnext ':'')+(t.done?'done':'')+'" data-id="'+t.id+'">'+
+    '<div class="task-swipe-bg" aria-hidden="true"><span>🗑 Excluir</span></div>'+
+    '<div class="task-swipe-fg">'+
     '<div class="task-top">'+
       '<div class="chk '+(t.done?'on':'')+'" onclick="toggleDone('+t.id+')">'+(t.done?'✓':'')+'</div>'+
       '<div class="task-main"><div class="task-title">'+escapeHtml(t.text)+'</div><div class="chip-row">'+chip+subBadge+'</div></div>'+
-      pin+
+      editBtn+pin+
       '<button class="task-x" onclick="delTask('+t.id+')">✕</button>'+
     '</div>';
   if(expandedId===t.id && !t.done){
@@ -662,6 +663,7 @@ function taskRow(t,isNext,isDeferred){
           '<button class="pc dim" onclick="adiar('+t.id+')">Depois ⤵</button>'+
         '</div>';
   }
+  row += '</div>';
   return row+'</li>';
 }
 function accordion(key,label,inner){
@@ -710,6 +712,29 @@ function addTask(){
   state.tasks.unshift({id,text:v,step:'',done:false,prazo:null,deferred:false,sub:[]});
   inp.value=''; commit();
 }
+let editTaskId=null;
+function openEditTask(id){
+  const t=state.tasks.find(x=>x.id===id); if(!t)return;
+  editTaskId=id;
+  sheet.innerHTML=`
+    <h2>Editar tarefa</h2>
+    <div class="step-edit-row" style="margin-bottom:0">
+      <input class="step-edit" id="editTaskInput" value="${escapeHtml(t.text)}" placeholder="descrição da tarefa…" onkeydown="if(event.key==='Enter')saveEditTask()">
+    </div>
+    <div class="sheet-actions">
+      <button class="secondary" onclick="closeOverlay()">Cancelar</button>
+      <button class="primary" onclick="saveEditTask()">Salvar</button>
+    </div>`;
+  showOverlay();
+  const inp=document.getElementById('editTaskInput');
+  setTimeout(()=>{ inp.focus(); inp.select(); },50);
+}
+function saveEditTask(){
+  const t=state.tasks.find(x=>x.id===editTaskId); if(!t){closeOverlay();return;}
+  const v=document.getElementById('editTaskInput').value.trim();
+  if(v) t.text=v;
+  closeOverlay(); commit();
+}
 function toggleExpand(id){expandedId=(expandedId===id?null:id); render();}
 function toggleSection(key){openSections[key]=!openSections[key]; render();}
 function setPrazo(id,v){
@@ -722,20 +747,77 @@ function setPrazo(id,v){
   expandedId=null; commit();
 }
 function clearPrazo(id){const t=state.tasks.find(t=>t.id===id); if(t){t.prazo=null; expandedId=null; commit();}}
-function adiar(id){const t=state.tasks.find(t=>t.id===id); if(t){t.deferred=true; if(state.pinnedId===id)state.pinnedId=null; expandedId=null; commit();}}
+function unpinTask(id){const i=state.pinnedIds.indexOf(id); if(i>=0) state.pinnedIds.splice(i,1);}
+function pinTask(id){ if(!state.pinnedIds.includes(id)) state.pinnedIds.push(id); }
+function adiar(id){const t=state.tasks.find(t=>t.id===id); if(t){t.deferred=true; unpinTask(id); expandedId=null; commit();}}
 function reativar(id){const t=state.tasks.find(t=>t.id===id); if(t){t.deferred=false; expandedId=null; commit();}}
-function togglePin(id){state.pinnedId=(state.pinnedId===id?null:id); commit(); window.scrollTo({top:0,behavior:'smooth'});}
+function togglePin(id){
+  if(state.pinnedIds.includes(id)) unpinTask(id); else pinTask(id);
+  commit(); window.scrollTo({top:0,behavior:'smooth'});
+}
 function toggleDone(id){
   const t=state.tasks.find(t=>t.id===id); if(!t)return;
   t.done=!t.done;
-  if(t.done && state.pinnedId===id) state.pinnedId=null;
+  if(t.done) unpinTask(id);
   commit();
 }
 function delTask(id){
   state.tasks=state.tasks.filter(t=>t.id!==id);
-  if(state.pinnedId===id) state.pinnedId=null;
+  unpinTask(id);
   commit();
 }
+
+/* ---------- arrastar para excluir ---------- */
+let swipe=null;
+const SWIPE_THRESHOLD=-78, SWIPE_MAX=-130;
+function onSwipeStart(e){
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  const fg=e.target.closest('.task-swipe-fg'); if(!fg) return;
+  const li=fg.closest('.task'); if(!li) return;
+  // não filtra por alvo (botão/input): um toque curto ainda dispara o clique nativo do
+  // botão normalmente (decided fica null); só vira swipe se o dedo de fato arrastar.
+  swipe={id:+li.dataset.id, fg, startX:e.clientX, startY:e.clientY, dx:0, decided:null, pointerId:e.pointerId};
+}
+function onSwipeMove(e){
+  if(!swipe || swipe.pointerId!==e.pointerId) return;
+  const dx=e.clientX-swipe.startX, dy=e.clientY-swipe.startY;
+  if(swipe.decided===null){
+    if(Math.abs(dx)>8 && Math.abs(dx)>Math.abs(dy)*1.2){
+      swipe.decided='h'; swipe.fg.classList.add('dragging');
+      try{ swipe.fg.setPointerCapture(e.pointerId); }catch(err){}
+    } else if(Math.abs(dy)>8){ swipe.decided='v'; }
+    else return;
+  }
+  if(swipe.decided!=='h') return;
+  if(e.cancelable) e.preventDefault();
+  swipe.dx=Math.min(0, Math.max(dx, SWIPE_MAX));
+  swipe.fg.style.transform='translateX('+swipe.dx+'px)';
+  const bg=swipe.fg.previousElementSibling;
+  if(bg) bg.style.opacity=Math.min(1, Math.abs(swipe.dx)/80);
+}
+function onSwipeEnd(e){
+  if(!swipe || swipe.pointerId!==e.pointerId) return;
+  const s=swipe; swipe=null;
+  if(s.decided!=='h') return;
+  s.fg.classList.remove('dragging');
+  if(s.dx<SWIPE_THRESHOLD){
+    s.fg.classList.add('removing');
+    s.fg.style.transform='translateX(-100%)';
+    s.fg.style.opacity='0';
+    setTimeout(()=>delTask(s.id),200);
+  } else {
+    s.fg.classList.add('snap');
+    s.fg.style.transform='';
+    const bg=s.fg.previousElementSibling; if(bg) bg.style.opacity='0';
+  }
+}
+(function initSwipe(){
+  const list=document.getElementById('taskList');
+  list.addEventListener('pointerdown', onSwipeStart);
+  list.addEventListener('pointermove', onSwipeMove, {passive:false});
+  list.addEventListener('pointerup', onSwipeEnd);
+  list.addEventListener('pointercancel', onSwipeEnd);
+})();
 
 /* ---------- trackers ---------- */
 function logExercise(){const d=todayISO(); if(!state.exercise.includes(d))state.exercise.push(d); commit();}
@@ -785,7 +867,7 @@ function saveSteps(){
   const t=state.tasks.find(x=>x.id===breakTaskId); if(!t){closeOverlay();return;}
   const vals=[...document.querySelectorAll('#stepRows .step-edit')].map(i=>i.value.trim()).filter(Boolean);
   t.sub=vals.map(v=>({text:v,done:false}));
-  if(state.pinnedId!==t.id){ state.pinnedId=t.id; }
+  pinTask(t.id);
   closeOverlay(); commit();
   window.scrollTo({top:0,behavior:'smooth'});
   if(vals.length) toast('Pronto — comece pelo passo 1');
@@ -991,7 +1073,7 @@ function applyMicro(){
   const t=nextTask();
   if(v && t){ t.step=v; commit(); }
   else if(v && !t){
-    const id=Date.now(); state.tasks.unshift({id,text:v,step:v,done:false,prazo:null,deferred:false,sub:[]}); state.pinnedId=id; commit();
+    const id=Date.now(); state.tasks.unshift({id,text:v,step:v,done:false,prazo:null,deferred:false,sub:[]}); pinTask(id); commit();
   }
   closeOverlay();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1002,7 +1084,7 @@ function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&
 function commit(){render(); saveState();}
 function hardReset(){
   if(!confirm('Zerar todas as tarefas e registros? Isso não volta.'))return;
-  state={tasks:[],pinnedId:null,exercise:[],sleep:[],focus:[],focusMin:25,start:todayISO()};
+  state={tasks:[],pinnedIds:[],exercise:[],sleep:[],focus:[],focusMin:25,start:todayISO()};
   expandedId=null; openSections={depois:false,done:false};
   commit();
 }
@@ -1043,8 +1125,10 @@ function maybeShowInstall(){
   if(saved) state=Object.assign(state,saved);
   if(!Array.isArray(state.focus)) state.focus=[];
   state.tasks.forEach(t=>{ if(t.prazo===undefined)t.prazo=null; if(t.deferred===undefined)t.deferred=false; if(!Array.isArray(t.sub))t.sub=[]; });
-  if(state.pinnedId==null && state.nextId!=null) state.pinnedId=state.nextId;
-  delete state.nextId; delete state.aiConsent;
+  if(!Array.isArray(state.pinnedIds)) state.pinnedIds=[];
+  if(state.pinnedId!=null && !state.pinnedIds.includes(state.pinnedId)) state.pinnedIds.push(state.pinnedId);
+  if(state.nextId!=null && !state.pinnedIds.includes(state.nextId)) state.pinnedIds.push(state.nextId);
+  delete state.pinnedId; delete state.nextId; delete state.aiConsent;
   if(!state.start) state.start=todayISO();
   render();
   saveState();
