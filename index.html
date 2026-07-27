@@ -47,6 +47,9 @@
     --signal-2:#FFC46B;
     --signal-soft:rgba(240,166,60,.14);
     --signal-line:rgba(240,166,60,.45);
+    --pin:#F0C93C;
+    --pin-soft:rgba(240,201,60,.14);
+    --pin-line:rgba(240,201,60,.5);
     --teal:#54B79C;
     --teal-soft:rgba(84,183,156,.14);
     --danger:#E37A5C;
@@ -111,7 +114,7 @@
   .hero-chip.td{background:var(--signal-soft);color:var(--signal);border-color:transparent}
   .hero-chip.tm{background:var(--teal-soft);color:var(--teal);border-color:transparent}
   .hero-chip.fut{background:var(--panel-2);color:var(--muted)}
-  .hero-chip.pinned{background:var(--signal-soft);color:var(--signal);border-color:transparent}
+  .hero-chip.pinned{background:var(--pin-soft);color:var(--pin);border-color:transparent}
   .action{font-family:"Bricolage Grotesque";font-weight:700;font-size:clamp(23px,5.6vw,33px);line-height:1.1;color:var(--ink);margin-bottom:14px;word-break:break-word}
   .action.empty{color:var(--muted);font-weight:600;font-size:19px;margin-bottom:10px}
   .hero-sub{display:none;align-items:flex-start;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:12px}
@@ -161,6 +164,7 @@
   .task-swipe-fg.snap{transition:transform .25s cubic-bezier(.2,.8,.3,1)}
   .task-swipe-fg.removing{transition:transform .2s ease, opacity .2s ease}
   .task.isnext .task-swipe-fg{border-color:var(--signal-line);background:linear-gradient(var(--signal-soft),var(--signal-soft)),var(--panel-2)}
+  .task.pinned .task-swipe-fg{box-shadow:inset 3px 0 0 var(--pin)}
   .task.done .task-swipe-fg{opacity:.5}
   .task-top{display:flex;align-items:flex-start;gap:10px}
   .task-main{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -174,7 +178,7 @@
   .task-x:active{color:var(--danger)}
   .pin,.edit-btn{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:6px 8px;flex-shrink:0;transition:color .12s;min-width:34px;min-height:34px}
   .pin:active,.edit-btn:active{color:var(--signal);transform:scale(.9)}
-  .pin.on{color:var(--signal);text-shadow:0 0 8px var(--signal-line)}
+  .pin.on{color:var(--pin);text-shadow:0 0 8px var(--pin-line)}
   .prazo-chip{align-self:flex-start;border:none;cursor:pointer;font-family:"JetBrains Mono";font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:6px;background:var(--panel-3);color:var(--muted)}
   .prazo-chip.none{background:transparent;border:1px dashed var(--line);color:var(--faint);font-weight:500}
   .prazo-chip.od{background:var(--danger-soft);color:var(--danger)}
@@ -194,7 +198,7 @@
   .tasks.sub{margin-top:8px}
   .group-label{list-style:none;font-family:"JetBrains Mono";font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 2px 0}
   .group-label:first-child{padding-top:0}
-  .group-label.pinned{color:var(--signal)}
+  .group-label.pinned{color:var(--pin)}
 
   /* trackers */
   .track-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
@@ -650,7 +654,7 @@ function taskRow(t,isNext,isDeferred){
   const sub=t.sub||[];
   const subBadge = (!t.done && sub.length)
     ? '<span class="sub-badge">✂ '+sub.filter(s=>s.done).length+'/'+sub.length+'</span>' : '';
-  let row='<li class="task '+(isNext?'isnext ':'')+(t.done?'done':'')+'" data-id="'+t.id+'">'+
+  let row='<li class="task '+(isNext?'isnext ':'')+(pinned&&!t.done?'pinned ':'')+(t.done?'done':'')+'" data-id="'+t.id+'">'+
     '<div class="task-swipe-bg" aria-hidden="true"><span>🗑 Excluir</span></div>'+
     '<div class="task-swipe-fg">'+
     '<div class="task-top">'+
