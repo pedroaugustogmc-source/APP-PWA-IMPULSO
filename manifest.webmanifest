@@ -1,7 +1,7 @@
 {
   "name": "Impulso — sistema de execução",
   "short_name": "Impulso",
-  "description": "Sistema de execução para quem trava: um próximo passo por vez, foco cronometrado e trackers de corpo e sono.",
+  "description": "Sistema de execução para quem trava: um próximo passo por vez, foco cronometrado e relatório semanal de progresso.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./?src=pwa",
