@@ -157,14 +157,13 @@
   /* task list */
   .tasks{list-style:none;display:flex;flex-direction:column;gap:9px}
   .task{position:relative;border-radius:12px;overflow:hidden}
-  .task-swipe-bg{position:absolute;inset:0;background:var(--danger);border-radius:12px;display:flex;align-items:center;justify-content:flex-end;padding-right:22px}
-  .task-swipe-bg span{color:#1c0d09;font-weight:700;font-size:13px;white-space:nowrap}
+  .task-swipe-bg{position:absolute;inset:0;background:var(--pin);border-radius:12px;display:flex;align-items:center;justify-content:flex-end;padding-right:22px}
+  .task-swipe-bg span{color:#1c1305;font-weight:700;font-size:13px;white-space:nowrap}
   .task-swipe-fg{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel-2);transition:border-color .15s;touch-action:pan-y;will-change:transform}
   .task-swipe-fg.dragging{transition:none}
   .task-swipe-fg.snap{transition:transform .25s cubic-bezier(.2,.8,.3,1)}
-  .task-swipe-fg.removing{transition:transform .2s ease, opacity .2s ease}
   .task.isnext .task-swipe-fg{border-color:var(--signal-line);background:linear-gradient(var(--signal-soft),var(--signal-soft)),var(--panel-2)}
-  .task.pinned .task-swipe-fg{box-shadow:inset 3px 0 0 var(--pin)}
+  .task.pinned .task-swipe-fg{border-color:var(--pin-line);background:linear-gradient(var(--pin-soft),var(--pin-soft)),var(--panel-2);box-shadow:inset 3px 0 0 var(--pin)}
   .task.done .task-swipe-fg{opacity:.5}
   .task-top{display:flex;align-items:flex-start;gap:10px}
   .task-main{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -655,8 +654,9 @@ function taskRow(t,isNext,isDeferred){
   const sub=t.sub||[];
   const subBadge = (!t.done && sub.length)
     ? '<span class="sub-badge">✂ '+sub.filter(s=>s.done).length+'/'+sub.length+'</span>' : '';
+  const swipeLabel = pinned ? '☆ Desafixar' : '★ Fixar';
   let row='<li class="task '+(isNext?'isnext ':'')+(pinned&&!t.done?'pinned ':'')+(t.done?'done':'')+'" data-id="'+t.id+'">'+
-    '<div class="task-swipe-bg" aria-hidden="true"><span>🗑 Excluir</span></div>'+
+    '<div class="task-swipe-bg" aria-hidden="true"><span>'+swipeLabel+'</span></div>'+
     '<div class="task-swipe-fg">'+
     '<div class="task-top">'+
       '<div class="chk '+(t.done?'on':'')+'" onclick="toggleDone('+t.id+')">'+(t.done?'✓':'')+'</div>'+
@@ -783,12 +783,13 @@ function delTask(id){
   commit();
 }
 
-/* ---------- arrastar para excluir ---------- */
+/* ---------- arrastar para fixar ---------- */
 let swipe=null;
 const SWIPE_THRESHOLD=-78, SWIPE_MAX=-130;
 function onSwipeStart(e){
   if(e.pointerType==='mouse' && e.button!==0) return;
   const fg=e.target.closest('.task-swipe-fg'); if(!fg) return;
+  if(!fg.querySelector('.pin')) return; // concluídas/adiadas não podem ser fixadas
   const li=fg.closest('.task'); if(!li) return;
   // não filtra por alvo (botão/input): um toque curto ainda dispara o clique nativo do
   // botão normalmente (decided fica null); só vira swipe se o dedo de fato arrastar.
@@ -816,16 +817,10 @@ function onSwipeEnd(e){
   const s=swipe; swipe=null;
   if(s.decided!=='h') return;
   s.fg.classList.remove('dragging');
-  if(s.dx<SWIPE_THRESHOLD){
-    s.fg.classList.add('removing');
-    s.fg.style.transform='translateX(-100%)';
-    s.fg.style.opacity='0';
-    setTimeout(()=>delTask(s.id),200);
-  } else {
-    s.fg.classList.add('snap');
-    s.fg.style.transform='';
-    const bg=s.fg.previousElementSibling; if(bg) bg.style.opacity='0';
-  }
+  s.fg.classList.add('snap');
+  s.fg.style.transform='';
+  const bg=s.fg.previousElementSibling; if(bg) bg.style.opacity='0';
+  if(s.dx<SWIPE_THRESHOLD) togglePin(s.id);
 }
 (function initSwipe(){
   const list=document.getElementById('taskList');
