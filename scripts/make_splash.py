@@ -36,19 +36,19 @@ def make_splash(w, h, path):
                 gp[x, y] = v
                 if x + 1 < w: gp[x + 1, y] = v
                 if y + 1 < h: gp[x, y + 1] = v
-    orange = Image.new("RGBA", (w, h), (0xF0, 0xA6, 0x3C, 255))
-    img.paste(orange, (0, 0), glow)
+    teal = Image.new("RGBA", (w, h), (0x54, 0xB7, 0x9C, 255))
+    img.paste(teal, (0, 0), glow)
 
     scale = (w / 512.0) * 0.42
     # glow da seta
     gl = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    draw_impulse(ImageDraw.Draw(gl), cx, cy, scale, (0xF0, 0xA6, 0x3C, 255))
+    draw_impulse(ImageDraw.Draw(gl), cx, cy, scale, (0x54, 0xB7, 0x9C, 255))
     gl = gl.filter(ImageFilter.GaussianBlur(int(w * 0.02)))
     img = Image.alpha_composite(img, gl)
     # seta com gradiente
     mask = Image.new("L", (w, h), 0)
     draw_impulse(ImageDraw.Draw(mask), cx, cy, scale, 255)
-    ag = vgrad(w, h, (0xFF, 0xCE, 0x82), (0xD9, 0x87, 0x27)).convert("RGBA")
+    ag = vgrad(w, h, (0x9F, 0xE6, 0xD3), (0x2E, 0x8E, 0x76)).convert("RGBA")
     img.paste(ag, (0, 0), mask)
     img.convert("RGB").save(path, "PNG")
     print("wrote", path, f"{w}x{h}")

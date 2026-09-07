@@ -50,7 +50,7 @@ def make_icon(px, maskable=False, path="icon.png"):
     S = px * SS
     # base: tile escuro com gradiente + glow quente no topo (assinatura do app)
     img = vertical_gradient((S, S), (0x26, 0x2B, 0x33), (0x0C, 0x0E, 0x10)).convert("RGBA")
-    glow_bg = radial_glow((S // 4, S // 4), (0xF0, 0xA6, 0x3C),
+    glow_bg = radial_glow((S // 4, S // 4), (0x54, 0xB7, 0x9C),
                           (S // 8), (S // 8) - S // 14, S // 6, 70).resize((S, S))
     img = Image.alpha_composite(img, glow_bg)
 
@@ -60,7 +60,7 @@ def make_icon(px, maskable=False, path="icon.png"):
     # glow da seta
     glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     Dg = ImageDraw.Draw(glow)
-    draw_impulse(Dg, cx, cy, scale, (0xF0, 0xA6, 0x3C, 255))
+    draw_impulse(Dg, cx, cy, scale, (0x54, 0xB7, 0x9C, 255))
     glow = glow.filter(ImageFilter.GaussianBlur(int(22 * SS)))
     img = Image.alpha_composite(img, glow)
 
@@ -68,7 +68,7 @@ def make_icon(px, maskable=False, path="icon.png"):
     mask = Image.new("L", (S, S), 0)
     Dm = ImageDraw.Draw(mask)
     draw_impulse(Dm, cx, cy, scale, 255)
-    arrow_grad = vertical_gradient((S, S), (0xFF, 0xCE, 0x82), (0xD9, 0x87, 0x27)).convert("RGBA")
+    arrow_grad = vertical_gradient((S, S), (0x9F, 0xE6, 0xD3), (0x2E, 0x8E, 0x76)).convert("RGBA")
     img.paste(arrow_grad, (0, 0), mask)
 
     # highlight sutil no topo da seta

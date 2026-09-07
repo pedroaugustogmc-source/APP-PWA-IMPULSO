@@ -52,6 +52,7 @@
     --pin-line:rgba(240,201,60,.5);
     --teal:#54B79C;
     --teal-soft:rgba(84,183,156,.14);
+    --teal-line:rgba(84,183,156,.45);
     --danger:#E37A5C;
     --danger-soft:rgba(227,122,92,.15);
     --good:#54B79C;
@@ -96,9 +97,37 @@
   header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:11px}
   .brand h1{font-size:25px;font-weight:800;position:relative;padding-left:16px}
-  .brand h1::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 10px 1px var(--signal-line)}
+  .brand h1::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px 1px var(--teal-line)}
   .brand .tag{font-family:"JetBrains Mono";font-size:9.5px;font-weight:500;text-transform:uppercase;letter-spacing:.18em;color:var(--faint)}
   .today{font-family:"JetBrains Mono";font-size:11px;color:var(--muted);text-transform:lowercase}
+  .acct-btn{margin-top:6px;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--muted);font-family:"JetBrains Mono";font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+  .acct-btn.on{color:var(--teal);border-color:var(--teal)}
+  .auth-tabs{display:flex;gap:6px;margin-bottom:14px}
+  .auth-tab{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);padding:10px;border-radius:9px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .auth-tab.on{background:var(--teal);border-color:var(--teal);color:#08110d}
+  .auth-err{color:var(--danger);font-size:12.5px;min-height:16px;margin:2px 0 4px}
+  .auth-field{margin-bottom:10px}
+  .auth-field input{width:100%;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:12px;font-family:inherit;font-size:16px;color:var(--ink)}
+  .auth-field input:focus{outline:none;border-color:var(--teal);background:var(--bg-2)}
+  .auth-field input::placeholder{color:var(--faint)}
+  .cat-chip{align-self:flex-start;border:1px dashed var(--line);cursor:pointer;font-family:"JetBrains Mono";font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:6px;background:transparent;color:var(--faint)}
+  .cat-chip.has{border-style:solid;border-color:transparent;background:var(--teal-soft);color:var(--teal)}
+  .cat-filter{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+  .cat-filter:empty{display:none}
+  .cat-f{background:var(--panel-2);border:1px solid var(--line-soft);color:var(--muted);font-family:"JetBrains Mono";font-size:11px;padding:6px 11px;border-radius:999px;cursor:pointer;font-weight:600}
+  .cat-f.on{background:var(--teal);border-color:var(--teal);color:#08110d}
+  .cat-f.manage{margin-left:auto;padding:6px 10px}
+  .cat-list{display:flex;flex-direction:column;gap:2px;margin-bottom:14px;max-height:40vh;overflow-y:auto}
+  .cat-row{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid var(--line-soft);cursor:pointer}
+  .cat-row:last-child{border-bottom:none}
+  .cat-row.on{color:var(--teal);font-weight:700}
+  .cat-row span:first-child{flex:1}
+  .cat-actions{display:flex;gap:2px}
+  .cat-actions button{background:none;border:none;color:var(--faint);cursor:pointer;font-size:14px;padding:6px 8px;min-width:32px;min-height:32px}
+  .cat-actions button:active{color:var(--signal)}
+  .cat-new-row{display:flex;gap:8px;margin-bottom:16px}
+  .cat-new-row input{flex:1;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:15px;color:var(--ink)}
+  .cat-new-row input::placeholder{color:var(--faint)}
 
   /* hero — instrumento principal */
   .hero{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:24px 22px 22px;margin-bottom:16px;overflow:hidden}
@@ -351,6 +380,7 @@
     </div>
     <div style="text-align:right">
       <div class="today" id="today"></div>
+      <button class="acct-btn" id="acctBtn"></button>
     </div>
   </header>
 
@@ -378,6 +408,7 @@
       <input id="capInput" placeholder="Nova tarefa" onkeydown="if(event.key==='Enter')addTask()">
       <button onclick="addTask()">+</button>
     </div>
+    <div class="cat-filter" id="catFilterRow"></div>
     <ul class="tasks" id="taskList"></ul>
   </section>
   </main>
@@ -424,9 +455,15 @@
   <button class="ix" onclick="dismissInstall()" aria-label="Fechar">✕</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 /* ---------- storage layer (localStorage) ---------- */
 const KEY='impulso:v1';
+const sb = window.supabase.createClient(
+  'https://vhlalwztswhezyyzlhde.supabase.co',
+  'sb_publishable_V1_QAq8l2TBxz_5X-smhzw_Th2f5DV9'
+);
+let sbSession=null, cloudReady=false;
 function loadState(){
   try{ const r=localStorage.getItem(KEY); return r?JSON.parse(r):null; }
   catch(e){ return null; }
@@ -437,16 +474,19 @@ function saveState(){
 
 /* ---------- state ---------- */
 let state={
-  tasks:[],          // {id,text,step,done,prazo:null|"YYYY-MM-DD",deferred:false,sub:[]}
+  tasks:[],          // {id,text,step,done,prazo:null|"YYYY-MM-DD",deferred:false,sub:[],categoryId:null|number}
   pinnedIds:[],      // tarefas fixadas como prioridade (o sistema escolhe a mais urgente entre elas)
-  doneLog:[],        // [{id, d:"YYYY-MM-DD"}] um registro por tarefa concluída (relatório semanal)
+  categories:[],     // [{id:number, name}] categorias criadas pelo usuário
+  doneLog:[],        // [{id, d:"YYYY-MM-DD", u}] um registro por tarefa concluída (relatório semanal)
   exercise:[],       // ["YYYY-MM-DD"] — usado pelo ritual pré-foco ("já me mexi hoje")
-  focus:[],          // [{d:"YYYY-MM-DD", m:minutos}] blocos concluídos
+  focus:[],          // [{d:"YYYY-MM-DD", m:minutos, u}] blocos concluídos
   focusMin:25,
-  start:null         // first-use date (12-week tracker)
+  start:null,        // first-use date (12-week tracker)
+  avatarColor:'teal'
 };
 let expandedId=null; // UI: qual tarefa está com controles de prazo abertos (não persiste)
 let openSections={depois:false,done:false}; // UI: accordions recolhidos por padrão
+let catFilter=null;  // UI: categoria selecionada no filtro da lista (não persiste)
 
 /* ---------- date helpers ---------- */
 function iso(d=new Date()){
@@ -455,6 +495,7 @@ function iso(d=new Date()){
   return y+'-'+m+'-'+dd;
 }
 function todayISO(){return iso();}
+function genUid(){return Date.now()*1000+Math.floor(Math.random()*1000);}
 function weekDatesDone(arr){
   const now=new Date(); const day=(now.getDay()+6)%7; // monday=0
   const monday=new Date(now); monday.setDate(now.getDate()-day); monday.setHours(0,0,0,0);
@@ -477,6 +518,7 @@ function focusWeek(){return weekDatesDone(state.focus.map(f=>f.d));}
 function render(){
   document.getElementById('today').innerHTML='<span class="greet">'+greeting()+'</span> · '+fmtToday();
   renderHero();
+  renderCatFilter();
   renderTasks();
   renderReport();
 }
@@ -588,11 +630,12 @@ function renderTasks(){
     return;
   }
   const nx=nextTask();
-  const act=activeTasks().slice().sort(urgencyCmp);
+  const inFilter=t=>catFilter==null || t.categoryId===catFilter;
+  const act=activeTasks().filter(inFilter).slice().sort(urgencyCmp);
   const pinned=act.filter(t=>state.pinnedIds.includes(t.id));
   const rest=act.filter(t=>!state.pinnedIds.includes(t.id));
-  const def=state.tasks.filter(t=>t.deferred && !t.done);
-  const done=state.tasks.filter(t=>t.done);
+  const def=state.tasks.filter(t=>t.deferred && !t.done && inFilter(t));
+  const done=state.tasks.filter(t=>t.done && inFilter(t));
 
   let html='';
   if(pinned.length){
@@ -617,6 +660,9 @@ function taskRow(t,isNext,isDeferred){
   const sub=t.sub||[];
   const subBadge = (!t.done && sub.length)
     ? '<span class="sub-badge">✂ '+sub.filter(s=>s.done).length+'/'+sub.length+'</span>' : '';
+  const cat = t.categoryId!=null ? state.categories.find(c=>c.id===t.categoryId) : null;
+  const catChip = t.done ? '' :
+    '<button class="cat-chip'+(cat?' has':'')+'" onclick="openCategoryPicker('+t.id+')">'+(cat?escapeHtml(cat.name):'🏷 categoria')+'</button>';
   const pinLabel = pinned ? '☆ Desafixar' : '★ Fixar';
   let row='<li class="task '+(isNext?'isnext ':'')+(pinned&&!t.done?'pinned ':'')+(t.done?'done':'')+'" data-id="'+t.id+'">'+
     '<div class="task-swipe-bg left" aria-hidden="true"><span>'+pinLabel+'</span></div>'+
@@ -624,7 +670,7 @@ function taskRow(t,isNext,isDeferred){
     '<div class="task-swipe-fg">'+
     '<div class="task-top">'+
       '<div class="chk '+(t.done?'on':'')+'" onclick="toggleDone('+t.id+')">'+(t.done?'✓':'')+'</div>'+
-      '<div class="task-main"><div class="task-title">'+escapeHtml(t.text)+'</div><div class="chip-row">'+chip+subBadge+'</div></div>'+
+      '<div class="task-main"><div class="task-title">'+escapeHtml(t.text)+'</div><div class="chip-row">'+chip+catChip+subBadge+'</div></div>'+
       editBtn+pin+
       '<button class="task-x" onclick="delTask('+t.id+')">✕</button>'+
     '</div>';
@@ -708,7 +754,7 @@ function addTask(){
   const inp=document.getElementById('capInput');
   const v=inp.value.trim(); if(!v)return;
   const id=Date.now();
-  state.tasks.unshift({id,text:v,step:'',done:false,prazo:null,deferred:false,sub:[]});
+  state.tasks.unshift({id,text:v,step:'',done:false,prazo:null,deferred:false,sub:[],categoryId:null});
   inp.value=''; commit();
 }
 let editTaskId=null;
@@ -759,7 +805,7 @@ function toggleDone(id){
   t.done=!t.done;
   if(t.done){
     unpinTask(id);
-    state.doneLog.push({id, d:todayISO()});
+    state.doneLog.push({id, d:todayISO(), u:genUid()});
   } else {
     for(let i=state.doneLog.length-1;i>=0;i--){
       if(state.doneLog[i].id===id){ state.doneLog.splice(i,1); break; }
@@ -771,6 +817,89 @@ function delTask(id){
   state.tasks=state.tasks.filter(t=>t.id!==id);
   unpinTask(id);
   commit();
+}
+
+/* ---------- categorias ---------- */
+function renderCatFilter(){
+  const el=document.getElementById('catFilterRow'); if(!el) return;
+  if(!state.categories.length){ el.innerHTML=''; return; }
+  el.innerHTML='<button class="cat-f'+(catFilter===null?' on':'')+'" onclick="setCatFilter(null)">Todas</button>'+
+    state.categories.map(c=>'<button class="cat-f'+(catFilter===c.id?' on':'')+'" onclick="setCatFilter('+c.id+')">'+escapeHtml(c.name)+'</button>').join('')+
+    '<button class="cat-f manage" onclick="openCategoryManager()" title="gerenciar categorias">⚙</button>';
+}
+function setCatFilter(id){ catFilter=id; render(); }
+function addCategory(name){
+  name=(name||'').trim(); if(!name) return null;
+  if(state.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){ toast('Essa categoria já existe'); return null; }
+  const c={id:Date.now(), name};
+  state.categories.push(c);
+  commit();
+  return c;
+}
+function renameCategory(id,newName){
+  newName=(newName||'').trim(); if(!newName) return;
+  const c=state.categories.find(c=>c.id===id); if(!c) return;
+  c.name=newName; commit();
+}
+function deleteCategory(id){
+  if(!confirm('Excluir esta categoria? As tarefas dela ficam sem categoria.')) return;
+  state.categories=state.categories.filter(c=>c.id!==id);
+  state.tasks.forEach(t=>{ if(t.categoryId===id) t.categoryId=null; });
+  if(catFilter===id) catFilter=null;
+  commit();
+}
+function setTaskCategory(taskId,catId){
+  const t=state.tasks.find(t=>t.id===taskId); if(!t) return;
+  t.categoryId=catId; commit();
+}
+function openCategoryManager(){ openCategoryPicker(null); }
+function openCategoryPicker(taskId){
+  sheet.innerHTML=`
+    <h2>${taskId!=null?'Categoria':'Gerenciar categorias'}</h2>
+    <div class="cat-list" id="catList"></div>
+    <div class="cat-new-row">
+      <input id="newCatInput" placeholder="nova categoria" onkeydown="if(event.key==='Enter')createCategoryFromPicker(${taskId==null?'null':taskId})">
+      <button class="primary" onclick="createCategoryFromPicker(${taskId==null?'null':taskId})">+</button>
+    </div>
+    <div class="sheet-actions"><button class="secondary" onclick="closeOverlay()">Fechar</button></div>`;
+  renderCatList(taskId);
+  showOverlay();
+  setTimeout(()=>{ const i=document.getElementById('newCatInput'); if(i) i.focus(); },50);
+}
+function renderCatList(taskId){
+  const el=document.getElementById('catList'); if(!el) return;
+  const t=taskId!=null ? state.tasks.find(x=>x.id===taskId) : null;
+  let html = t ? ('<div class="cat-row'+(t.categoryId==null?' on':'')+'"><span onclick="assignCategory('+taskId+',null)">Sem categoria</span></div>') : '';
+  html += state.categories.map(c=>
+    '<div class="cat-row'+(t && t.categoryId===c.id?' on':'')+'">'+
+      '<span onclick="'+(taskId!=null?'assignCategory('+taskId+','+c.id+')':'')+'">'+escapeHtml(c.name)+'</span>'+
+      '<span class="cat-actions">'+
+        '<button onclick="renameCategoryPrompt('+c.id+','+(taskId==null?'null':taskId)+')" title="renomear">✎</button>'+
+        '<button onclick="deleteCategory('+c.id+'); renderCatList('+(taskId==null?'null':taskId)+')" title="excluir">🗑</button>'+
+      '</span>'+
+    '</div>'
+  ).join('');
+  if(!state.categories.length && !t) html += '<div class="cat-row" style="cursor:default;color:var(--faint)"><span>Nenhuma categoria ainda</span></div>';
+  el.innerHTML=html;
+}
+function assignCategory(taskId,catId){
+  setTaskCategory(taskId,catId);
+  closeOverlay();
+}
+function createCategoryFromPicker(taskId){
+  const inp=document.getElementById('newCatInput');
+  const c=addCategory(inp.value);
+  if(c){
+    inp.value='';
+    if(taskId!=null){ assignCategory(taskId,c.id); }
+    else { renderCatList(taskId); renderCatFilter(); }
+  }
+}
+function renameCategoryPrompt(id,taskId){
+  const c=state.categories.find(c=>c.id===id); if(!c) return;
+  const name=prompt('Novo nome da categoria',c.name);
+  if(name!=null) renameCategory(id,name);
+  renderCatList(taskId); renderCatFilter();
 }
 
 /* ---------- arrastar para fixar (esquerda) ou excluir (direita) ---------- */
@@ -899,6 +1028,208 @@ function showOverlay(){overlay.classList.add('open'); document.body.style.overfl
 function closeOverlay(){overlay.classList.remove('open'); document.body.style.overflow=''; stopTimer(); sheet.innerHTML='';}
 overlay.addEventListener('click',e=>{if(e.target===overlay && !timer.running)closeOverlay();});
 
+/* ---------- conta (Supabase: login/cadastro, sincroniza entre aparelhos) ---------- */
+let authMode='login';
+const MIGRATE_KEY='impulso:migrateOnNextLogin';
+async function maybeMigrateThenPull(){
+  let shouldMigrate=false;
+  try{ shouldMigrate=localStorage.getItem(MIGRATE_KEY)==='1'; }catch(e){}
+  if(shouldMigrate && (state.tasks.length>0 || state.categories.length>0)){
+    cloudReady=true;
+    await syncCloud();
+  }
+  try{ localStorage.removeItem(MIGRATE_KEY); }catch(e){}
+  await pullFromCloud();
+}
+async function initAuth(){
+  try{
+    const {data}=await sb.auth.getSession();
+    sbSession=data.session;
+    renderAccount();
+    if(sbSession) await maybeMigrateThenPull();
+  }catch(e){ console.error('auth init error', e); }
+  sb.auth.onAuthStateChange((_event, newSession)=>{
+    sbSession=newSession;
+    renderAccount();
+    if(!sbSession) cloudReady=false;
+  });
+}
+function renderAccount(){
+  const el=document.getElementById('acctBtn'); if(!el) return;
+  if(sbSession){
+    el.textContent='👤 '+sbSession.user.email.split('@')[0];
+    el.className='acct-btn on';
+    el.onclick=openAccountMenu;
+  } else {
+    el.textContent='👤 entrar';
+    el.className='acct-btn';
+    el.onclick=()=>openAuth('login');
+  }
+}
+function openAccountMenu(){
+  sheet.innerHTML=`
+    <h2>Sua conta</h2>
+    <p class="lead">${escapeHtml(sbSession.user.email)}</p>
+    <p class="lead" style="margin-top:-8px">Suas tarefas ficam salvas nesta conta e aparecem em qualquer aparelho onde você entrar.</p>
+    <div class="sheet-actions">
+      <button class="secondary" onclick="closeOverlay()">Fechar</button>
+      <button class="primary" onclick="doLogout()">Sair</button>
+    </div>`;
+  showOverlay();
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  sbSession=null; cloudReady=false;
+  closeOverlay(); renderAccount();
+  toast('Você saiu da conta');
+}
+function openAuth(mode){
+  authMode=mode||'login';
+  renderAuthSheet();
+  showOverlay();
+}
+function switchAuthMode(m){ authMode=m; renderAuthSheet(); }
+function renderAuthSheet(){
+  const isLogin=authMode==='login';
+  const hadLocal=state.tasks.length>0 || state.categories.length>0;
+  sheet.innerHTML=`
+    <h2>${isLogin?'Entrar':'Criar conta'}</h2>
+    <p class="lead">${isLogin?'Acesse suas tarefas de qualquer aparelho.':(hadLocal?'Suas tarefas deste aparelho vão para a nova conta.':'Leva 10 segundos.')}</p>
+    <div class="auth-tabs">
+      <button class="auth-tab${isLogin?' on':''}" onclick="switchAuthMode('login')">Entrar</button>
+      <button class="auth-tab${!isLogin?' on':''}" onclick="switchAuthMode('signup')">Criar conta</button>
+    </div>
+    <div class="auth-field"><input id="authEmail" type="email" placeholder="email" autocomplete="email"></div>
+    <div class="auth-field"><input id="authPass" type="password" placeholder="senha" autocomplete="${isLogin?'current-password':'new-password'}" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <div class="auth-err" id="authErr"></div>
+    <div class="sheet-actions">
+      <button class="secondary" onclick="closeOverlay()">Cancelar</button>
+      <button class="primary" id="authSubmitBtn" onclick="submitAuth()">${isLogin?'Entrar':'Criar conta'}</button>
+    </div>`;
+  setTimeout(()=>{ const i=document.getElementById('authEmail'); if(i) i.focus(); },50);
+}
+function translateAuthError(msg){
+  if(/already registered|already exists|User already registered/i.test(msg)) return 'Este email já tem uma conta. Tente entrar.';
+  if(/invalid login credentials/i.test(msg)) return 'Email ou senha incorretos.';
+  if(/password.*(6|least)/i.test(msg)) return 'A senha precisa ter pelo menos 6 caracteres.';
+  if(/valid email/i.test(msg)) return 'Digite um email válido.';
+  return msg;
+}
+async function submitAuth(){
+  const emailEl=document.getElementById('authEmail'), passEl=document.getElementById('authPass');
+  const errEl=document.getElementById('authErr'), btn=document.getElementById('authSubmitBtn');
+  const email=emailEl.value.trim(), pass=passEl.value;
+  errEl.textContent='';
+  if(!email || !pass){ errEl.textContent='Preencha email e senha.'; return; }
+  if(pass.length<6){ errEl.textContent='A senha precisa ter pelo menos 6 caracteres.'; return; }
+  btn.disabled=true; btn.textContent='Aguarde…';
+  try{
+    if(authMode==='login'){
+      const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error) throw error;
+      sbSession=data.session;
+      await maybeMigrateThenPull();
+      closeOverlay(); renderAccount();
+      toast('Bem-vindo de volta 👋');
+    } else {
+      const hadLocal=state.tasks.length>0 || state.categories.length>0;
+      const {data,error}=await sb.auth.signUp({email,password:pass});
+      if(error) throw error;
+      if(hadLocal){ try{ localStorage.setItem(MIGRATE_KEY,'1'); }catch(e){} }
+      if(data.session){
+        sbSession=data.session;
+        await maybeMigrateThenPull();
+        closeOverlay(); renderAccount();
+        toast(hadLocal?'Conta criada — suas tarefas foram salvas na nuvem 🎉':'Conta criada 🎉');
+      } else {
+        closeOverlay();
+        toast(hadLocal?'Confira seu email para confirmar. Suas tarefas deste aparelho entram na conta assim que você confirmar e entrar.':'Confira seu email para confirmar a conta');
+      }
+    }
+  }catch(e){
+    errEl.textContent=translateAuthError(e.message||String(e));
+    btn.disabled=false; btn.textContent=authMode==='login'?'Entrar':'Criar conta';
+  }
+}
+
+/* ---------- sincronização com a nuvem ---------- */
+let syncTimer=null;
+function scheduleSync(){
+  if(!sbSession || !cloudReady) return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{ syncCloud().catch(e=>console.error('sync error',e)); }, 800);
+}
+function notIn(query,col,values){
+  return values.length ? query.not(col,'in','('+values.join(',')+')') : query;
+}
+async function syncCloud(){
+  if(!sbSession) return;
+  const uid=sbSession.user.id;
+  const catRows=state.categories.map(c=>({user_id:uid, client_id:c.id, name:c.name}));
+  if(catRows.length) await sb.from('categories').upsert(catRows,{onConflict:'user_id,client_id'});
+  await notIn(sb.from('categories').delete().eq('user_id',uid), 'client_id', state.categories.map(c=>c.id));
+
+  const {data:allCats}=await sb.from('categories').select('id,client_id').eq('user_id',uid);
+  const catMap={}; (allCats||[]).forEach(r=>{ catMap[r.client_id]=r.id; });
+
+  const taskRows=state.tasks.map(t=>({
+    user_id:uid, client_id:t.id,
+    category_id: t.categoryId!=null ? (catMap[t.categoryId]||null) : null,
+    text:t.text, step:t.step||'', done:!!t.done, prazo:t.prazo||null, deferred:!!t.deferred,
+    pinned: state.pinnedIds.includes(t.id), sub: t.sub||[], updated_at:new Date().toISOString()
+  }));
+  if(taskRows.length) await sb.from('tasks').upsert(taskRows,{onConflict:'user_id,client_id'});
+  await notIn(sb.from('tasks').delete().eq('user_id',uid), 'client_id', state.tasks.map(t=>t.id));
+
+  const doneRows=state.doneLog.map(d=>({user_id:uid, entry_id:d.u, task_client_id:d.id, done_date:d.d}));
+  if(doneRows.length) await sb.from('done_log').upsert(doneRows,{onConflict:'user_id,entry_id'});
+  await notIn(sb.from('done_log').delete().eq('user_id',uid), 'entry_id', state.doneLog.map(d=>d.u));
+
+  if(state.exercise.length){
+    const exRows=state.exercise.map(d=>({user_id:uid, log_date:d}));
+    await sb.from('exercise_log').upsert(exRows,{onConflict:'user_id,log_date'});
+  }
+  await notIn(sb.from('exercise_log').delete().eq('user_id',uid), 'log_date', state.exercise);
+
+  const focusRows=state.focus.map(f=>({user_id:uid, entry_id:f.u, log_date:f.d, minutes:f.m}));
+  if(focusRows.length) await sb.from('focus_log').upsert(focusRows,{onConflict:'user_id,entry_id'});
+  await notIn(sb.from('focus_log').delete().eq('user_id',uid), 'entry_id', state.focus.map(f=>f.u));
+
+  await sb.from('user_settings').upsert({user_id:uid, focus_min:state.focusMin, start_date:state.start, avatar_color:state.avatarColor||'teal'},{onConflict:'user_id'});
+}
+async function pullFromCloud(){
+  if(!sbSession) return;
+  const uid=sbSession.user.id;
+  const [catsRes,tasksRes,doneRes,exRes,focusRes,setRes]=await Promise.all([
+    sb.from('categories').select('*').eq('user_id',uid).order('created_at'),
+    sb.from('tasks').select('*').eq('user_id',uid).order('created_at'),
+    sb.from('done_log').select('*').eq('user_id',uid),
+    sb.from('exercise_log').select('*').eq('user_id',uid),
+    sb.from('focus_log').select('*').eq('user_id',uid),
+    sb.from('user_settings').select('*').eq('user_id',uid).maybeSingle()
+  ]);
+  const catByUuid={};
+  state.categories=(catsRes.data||[]).filter(c=>c.client_id!=null).map(c=>{ catByUuid[c.id]=c.client_id; return {id:c.client_id, name:c.name}; });
+  const tasksData=(tasksRes.data||[]).filter(t=>t.client_id!=null);
+  state.tasks=tasksData.map(t=>({
+    id:t.client_id, text:t.text, step:t.step||'', done:t.done, prazo:t.prazo, deferred:t.deferred,
+    sub:t.sub||[], categoryId: t.category_id!=null ? (catByUuid[t.category_id]??null) : null
+  }));
+  state.pinnedIds=tasksData.filter(t=>t.pinned).map(t=>t.client_id);
+  state.doneLog=(doneRes.data||[]).filter(d=>d.entry_id!=null).map(d=>({id:d.task_client_id, d:d.done_date, u:d.entry_id}));
+  state.exercise=(exRes.data||[]).map(e=>e.log_date);
+  state.focus=(focusRes.data||[]).filter(f=>f.entry_id!=null).map(f=>({d:f.log_date, m:f.minutes, u:f.entry_id}));
+  if(setRes.data){
+    state.focusMin=setRes.data.focus_min;
+    state.start=setRes.data.start_date;
+    state.avatarColor=setRes.data.avatar_color||'teal';
+  }
+  expandedId=null; catFilter=null;
+  cloudReady=true;
+  saveState();
+  render();
+}
+
 /* ---------- pre-focus ritual ---------- */
 let ritual={move:false,items:[false,false,false]};
 function openRitual(){
@@ -994,7 +1325,7 @@ function captureDistraction(){
   const i=document.getElementById('distrInput'); if(!i)return;
   const v=i.value.trim(); if(!v){toggleDistr(false);return;}
   const id=Date.now();
-  state.tasks.unshift({id,text:v,step:'',done:false,prazo:null,deferred:false,sub:[]});
+  state.tasks.unshift({id,text:v,step:'',done:false,prazo:null,deferred:false,sub:[],categoryId:null});
   capturedThisBlock++;
   commit();
   i.value=''; toggleDistr(false);
@@ -1045,7 +1376,7 @@ document.addEventListener('visibilitychange',()=>{
 function clockStr(s){s=Math.max(0,s); const m=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return m+':'+ss;}
 function finishTimer(manual){
   stopTimer();
-  state.focus.push({d:todayISO(), m:state.focusMin});
+  state.focus.push({d:todayISO(), m:state.focusMin, u:genUid()});
   commit();
   const n=focusToday();
   const cap = capturedThisBlock>0
@@ -1101,7 +1432,7 @@ function applyMicro(){
   const t=nextTask();
   if(v && t){ t.step=v; commit(); }
   else if(v && !t){
-    const id=Date.now(); state.tasks.unshift({id,text:v,step:v,done:false,prazo:null,deferred:false,sub:[]}); pinTask(id); commit();
+    const id=Date.now(); state.tasks.unshift({id,text:v,step:v,done:false,prazo:null,deferred:false,sub:[],categoryId:null}); pinTask(id); commit();
   }
   closeOverlay();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1109,11 +1440,11 @@ function applyMicro(){
 
 /* ---------- utils ---------- */
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function commit(){render(); saveState();}
+function commit(){render(); saveState(); scheduleSync();}
 function hardReset(){
   if(!confirm('Zerar todas as tarefas e registros? Isso não volta.'))return;
-  state={tasks:[],pinnedIds:[],doneLog:[],exercise:[],focus:[],focusMin:25,start:todayISO()};
-  expandedId=null; openSections={depois:false,done:false};
+  state={tasks:[],pinnedIds:[],categories:[],doneLog:[],exercise:[],focus:[],focusMin:25,start:todayISO(),avatarColor:state.avatarColor||'teal'};
+  expandedId=null; openSections={depois:false,done:false}; catFilter=null;
   commit();
 }
 
@@ -1153,7 +1484,11 @@ function maybeShowInstall(){
   if(saved) state=Object.assign(state,saved);
   if(!Array.isArray(state.focus)) state.focus=[];
   if(!Array.isArray(state.doneLog)) state.doneLog=[];
-  state.tasks.forEach(t=>{ if(t.prazo===undefined)t.prazo=null; if(t.deferred===undefined)t.deferred=false; if(!Array.isArray(t.sub))t.sub=[]; });
+  if(!Array.isArray(state.categories)) state.categories=[];
+  if(!state.avatarColor) state.avatarColor='teal';
+  state.doneLog.forEach(d=>{ if(d.u==null) d.u=genUid(); });
+  state.focus.forEach(f=>{ if(f.u==null) f.u=genUid(); });
+  state.tasks.forEach(t=>{ if(t.prazo===undefined)t.prazo=null; if(t.deferred===undefined)t.deferred=false; if(!Array.isArray(t.sub))t.sub=[]; if(t.categoryId===undefined)t.categoryId=null; });
   if(!Array.isArray(state.pinnedIds)) state.pinnedIds=[];
   if(state.pinnedId!=null && !state.pinnedIds.includes(state.pinnedId)) state.pinnedIds.push(state.pinnedId);
   if(state.nextId!=null && !state.pinnedIds.includes(state.nextId)) state.pinnedIds.push(state.nextId);
@@ -1162,6 +1497,7 @@ function maybeShowInstall(){
   render();
   saveState();
   maybeShowInstall();
+  initAuth();
 })();
 
 /* ---------- service worker ---------- */
