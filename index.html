@@ -1034,7 +1034,18 @@ const MIGRATE_KEY='impulso:migrateOnNextLogin';
 async function maybeMigrateThenPull(){
   let shouldMigrate=false;
   try{ shouldMigrate=localStorage.getItem(MIGRATE_KEY)==='1'; }catch(e){}
-  if(shouldMigrate && (state.tasks.length>0 || state.categories.length>0)){
+  const hasLocal=state.tasks.length>0 || state.categories.length>0;
+  if(!shouldMigrate && hasLocal){
+    // rede de segurança: se a conta na nuvem ainda está vazia mas este aparelho tem
+    // tarefas locais, assume que ainda não foram enviadas (ex.: a sincronização original
+    // falhou ou a flag se perdeu) e migra mesmo assim — nunca descarta dado local.
+    try{
+      const {count}=await sb.from('tasks').select('id',{count:'exact',head:true}).eq('user_id',sbSession.user.id);
+      const {count:catCount}=await sb.from('categories').select('id',{count:'exact',head:true}).eq('user_id',sbSession.user.id);
+      if(!count && !catCount) shouldMigrate=true;
+    }catch(e){ console.error('cloud-empty check failed', e); }
+  }
+  if(shouldMigrate && hasLocal){
     cloudReady=true;
     await syncCloud();
   }
