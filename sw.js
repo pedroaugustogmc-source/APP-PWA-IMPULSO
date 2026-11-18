@@ -1,8 +1,9 @@
 /* Impulso — service worker (network-first: sempre a versão mais nova quando há conexão) */
-const CACHE = 'impulso-v4';
+const CACHE = 'impulso-v5';
 const ASSETS = [
   '/',
   './manifest.webmanifest',
+  './vendor/supabase.umd.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',

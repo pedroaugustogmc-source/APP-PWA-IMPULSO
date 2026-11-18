@@ -455,14 +455,17 @@
   <button class="ix" onclick="dismissInstall()" aria-label="Fechar">✕</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="vendor/supabase.umd.js"></script>
 <script>
 /* ---------- storage layer (localStorage) ---------- */
 const KEY='impulso:v1';
-const sb = window.supabase.createClient(
-  'https://vhlalwztswhezyyzlhde.supabase.co',
-  'sb_publishable_V1_QAq8l2TBxz_5X-smhzw_Th2f5DV9'
-);
+let sb=null, sbInitError=null;
+try{
+  sb = window.supabase.createClient(
+    'https://vhlalwztswhezyyzlhde.supabase.co',
+    'sb_publishable_V1_QAq8l2TBxz_5X-smhzw_Th2f5DV9'
+  );
+}catch(e){ sbInitError=e; console.error('supabase client init failed', e); }
 let sbSession=null, cloudReady=false;
 function loadState(){
   try{ const r=localStorage.getItem(KEY); return r?JSON.parse(r):null; }
@@ -1053,6 +1056,7 @@ async function maybeMigrateThenPull(){
   await pullFromCloud();
 }
 async function initAuth(){
+  if(!sb){ renderAccount(); return; }
   try{
     const {data}=await sb.auth.getSession();
     sbSession=data.session;
@@ -1067,6 +1071,12 @@ async function initAuth(){
 }
 function renderAccount(){
   const el=document.getElementById('acctBtn'); if(!el) return;
+  if(!sb){
+    el.textContent='👤 indisponível';
+    el.className='acct-btn';
+    el.onclick=()=>toast('Não foi possível conectar à conta agora. Verifique sua internet e recarregue o app.');
+    return;
+  }
   if(sbSession){
     el.textContent='👤 '+sbSession.user.email.split('@')[0];
     el.className='acct-btn on';
@@ -1089,6 +1099,7 @@ function openAccountMenu(){
   showOverlay();
 }
 async function doLogout(){
+  if(!sb) return;
   await sb.auth.signOut();
   sbSession=null; cloudReady=false;
   closeOverlay(); renderAccount();
@@ -1127,6 +1138,7 @@ function translateAuthError(msg){
   return msg;
 }
 async function submitAuth(){
+  if(!sb){ document.getElementById('authErr').textContent='Sem conexão com o servidor de contas. Verifique sua internet.'; return; }
   const emailEl=document.getElementById('authEmail'), passEl=document.getElementById('authPass');
   const errEl=document.getElementById('authErr'), btn=document.getElementById('authSubmitBtn');
   const email=emailEl.value.trim(), pass=passEl.value;
