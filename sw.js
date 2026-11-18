@@ -1,5 +1,5 @@
 /* Impulso — service worker (network-first: sempre a versão mais nova quando há conexão) */
-const CACHE = 'impulso-v5';
+const CACHE = 'impulso-v6';
 const ASSETS = [
   '/',
   './manifest.webmanifest',
@@ -8,7 +8,8 @@ const ASSETS = [
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png',
-  './icons/favicon-32.png'
+  './icons/favicon-32.png',
+  './icons/avatar.png'
 ];
 
 self.addEventListener('install', (e) => {
